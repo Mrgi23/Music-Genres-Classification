@@ -1,0 +1,13 @@
+librosa
+matplotlib
+numpy
+pandas
+pytest
+pytest-cov
+pytest-mock
+requests
+scikit-learn
+scipy
+soundfile
+torch
+urllib3
