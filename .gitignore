@@ -39,3 +39,6 @@ venv.bak/
 
 # Visual Studio Code
 .vscode/
+
+# Audio files
+*.wav
