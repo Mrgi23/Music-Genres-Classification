@@ -42,7 +42,7 @@ file(GLOB UNIT_TEST_SOURCES "${ROOT_DIR}/tests/cpp/unit/*.cpp")
 add_executable(unitTests "${UNIT_TEST_SOURCES}" "${CXX_SOURCES}")
 
 # Link with Armadillo, Google Test, LiquidDSP and pthread
-target_link_libraries(unitTests curl gtest gtest_main gmock zip pthread)
+target_link_libraries(unitTests aubio curl gtest gtest_main gmock zip pthread)
 
 # Enable code coverage flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping -O0")
