@@ -11,6 +11,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Declare the project.
 project(Tests)
 
+# Set ROOT_DIR
+get_filename_component(ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
+
 # Includes
 include(FetchContent)
 
@@ -22,11 +25,27 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+# Download Torch
+set(LIBTORCH_DIR "${ROOT_DIR}/external")
+
+if(NOT EXISTS "${LIBTORCH_DIR}/libtorch/include")
+  message(STATUS "LibTorch not found. Downloading...")
+
+  file(MAKE_DIRECTORY "${LIBTORCH_DIR}")
+  execute_process(
+    COMMAND bash -c "curl -L https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-1.11.0%2Bcpu.zip -o ${LIBTORCH_DIR}/libtorch-cxx11-abi-shared-with-deps-1.11.0+cpu.zip && \
+                     unzip ${LIBTORCH_DIR}/libtorch-cxx11-abi-shared-with-deps-1.11.0+cpu.zip -d ${LIBTORCH_DIR} && \
+                     ${CMAKE_COMMAND} -E remove ${LIBTORCH_DIR}/libtorch-cxx11-abi-shared-with-deps-1.11.0+cpu.zip"
+    RESULT_VARIABLE result
+  )
+endif()
+find_package(Torch REQUIRED PATHS "${LIBTORCH_DIR}/libtorch")
+
 # Include Google Test and Google Mock
 include_directories(SYSTEM "${gtest_SOURCE_DIR}/include" "${gmock_SOURCE_DIR}/include")
 
-# Set ROOT_DIR
-get_filename_component(ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
+# Include Torch
+include_directories(SYSTEM "${TORCH_INCLUDE_DIRS}")
 
 # Include project headers
 include_directories("${ROOT_DIR}/inc")
@@ -37,12 +56,15 @@ list(REMOVE_ITEM CXX_SOURCES "${ROOT_DIR}/src/cpp/main.cpp")
 
 # Collect all test files from tests/cpp/unit
 file(GLOB UNIT_TEST_SOURCES "${ROOT_DIR}/tests/cpp/unit/*.cpp")
+file(GLOB INTEGRATION_TEST_SOURCES "${ROOT_DIR}/tests/cpp/integration/*.cpp")
 
 # Create the test executables
 add_executable(unitTests "${UNIT_TEST_SOURCES}" "${CXX_SOURCES}")
+add_executable(integrationTests "${INTEGRATION_TEST_SOURCES}" "${CXX_SOURCES}")
 
-# Link with Armadillo, Google Test, LiquidDSP and pthread
-target_link_libraries(unitTests aubio curl gtest gtest_main gmock zip pthread)
+# Link with Google Test, Torch, etd.
+target_link_libraries(unitTests aubio curl gtest gtest_main gmock "${TORCH_LIBRARIES}" pthread zip)
+target_link_libraries(integrationTests aubio curl gtest gtest_main gmock "${TORCH_LIBRARIES}" pthread zip)
 
 # Enable code coverage flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping -O0")
@@ -57,12 +79,20 @@ add_custom_target(
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
 )
 
+# Make integration tests
+add_custom_target(
+  integration
+  COMMAND "./integrationTests"
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+)
+
 # Make coverage
 add_custom_target(
   coverage
   COMMAND LLVM_PROFILE_FILE=coverageUnit.profraw "./unitTests"
-  COMMAND llvm-profdata merge -sparse coverageUnit.profraw -o coverage.profdata
-  COMMAND llvm-cov export "./unitTests"  -instr-profile=coverage.profdata -format=lcov > "${ROOT_DIR}/reports/htmlcov/cpp/coverage.lcov"
+  COMMAND LLVM_PROFILE_FILE=coverageIntegration.profraw "./integrationTests"
+  COMMAND llvm-profdata merge -sparse coverageUnit.profraw coverageIntegration.profraw -o coverage.profdata
+  COMMAND llvm-cov export "./unitTests" "./integrationTests"  -instr-profile=coverage.profdata -format=lcov > "${ROOT_DIR}/reports/htmlcov/cpp/coverage.lcov"
   COMMAND genhtml "${ROOT_DIR}/reports/htmlcov/cpp/coverage.lcov" --output-directory "${ROOT_DIR}/reports/htmlcov/cpp/"
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
 )
