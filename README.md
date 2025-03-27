@@ -1,7 +1,7 @@
 # Music Genres Classification
 
 ## Description
-The **Music Genres Classification** is a deep learning project that leverages convolutional neural networks (CNNs) for accurate and efficient classification of audio signals into musical genres. Designed for audio analysis and music information retrieval tasks, this system preprocesses audio samples and feeds them into a trained CNN model to predict one of ten instrumental music genres.
+The **Music Genres Classification** is a deep learning project that leverages convolutional neural networks (CNNs) for accurate and efficient classification of audio signals into musical genres. Designed for audio analysis and music information retrieval tasks, this system preprocesses audio samples and feeds them into a trained CNN model to predict one of ten music genres.
 
 ### Key Features
 - **End-to-End Audio Classification** – From raw audio to genre prediction, all handled in a single pipeline.
