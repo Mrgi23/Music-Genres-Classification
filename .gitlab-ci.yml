@@ -1,0 +1,115 @@
+stages:
+  - setup
+  - update
+  - build
+  - test
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "main"'
+      when: always
+    - when: never
+
+variables:
+  ROOT_DIR: ${CI_PROJECT_DIR}
+  BUILD_DIR: ${ROOT_DIR}/tests/build
+  REPORT_DIR: ${ROOT_DIR}/reports
+  COVERAGE_CPP_DIR: ${REPORT_DIR}/htmlcov/cpp
+  COVERAGE_PY_DIR: ${REPORT_DIR}/htmlcov/python
+  IMAGE_NAME: registry.gitlab.com/mrgi23/music-genres-classification/mgc:latest
+
+setup_image:
+  stage: setup
+  rules:
+    - changes:
+      - Dockerfile
+  tags:
+    - arm
+    - raspberrypi
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker build -t mgc:latest .
+    - docker tag mgc:latest $IMAGE_NAME
+    - docker push $IMAGE_NAME
+
+update_image:
+  stage: update
+  rules:
+    - changes:
+      - Dockerfile
+      - requirements.txt
+  tags:
+    - arm
+    - raspberrypi
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker pull $IMAGE_NAME
+    - docker run -d --name temp_container $IMAGE_NAME /bin/bash -c "tail -f /dev/null"
+    - docker cp $CI_PROJECT_DIR/requirements.txt temp_container:/requirements.txt
+    - docker exec temp_container /venv/bin/pip install -r /requirements.txt
+    - docker commit temp_container $IMAGE_NAME
+    - docker push $IMAGE_NAME
+    - docker rm -f temp_container
+
+build_cpp:
+  stage: build
+  tags:
+    - arm
+    - raspberrypi
+  image: $IMAGE_NAME
+  script:
+    - mkdir -p ${BUILD_DIR}
+    - cd ${BUILD_DIR}
+    - cmake ..
+    - cmake --build . --parallel ${nproc}
+  artifacts:
+    paths:
+      - ${BUILD_DIR}
+    expire_in: 1 hour
+
+test_cpp:
+  stage: test
+  tags:
+    - arm
+    - raspberrypi
+  image: $IMAGE_NAME
+  script:
+    - mkdir -p ${COVERAGE_CPP_DIR}
+    - cd ${BUILD_DIR}
+    - LLVM_PROFILE_FILE=coverageUnit.profraw ./unitTests
+    - LLVM_PROFILE_FILE=coverageIntegration.profraw ./integrationTests
+    - llvm-profdata merge -sparse coverageUnit.profraw coverageIntegration.profraw -o coverage.profdata
+    - llvm-cov export ./unitTests ./integrationTests -instr-profile=coverage.profdata -format=lcov > ${COVERAGE_CPP_DIR}/coverage.lcov
+    - llvm-cov report ./unitTests ./integrationTests -instr-profile=coverage.profdata > coverage.txt
+    - genhtml ${COVERAGE_CPP_DIR}/coverage.lcov --output-directory ${COVERAGE_CPP_DIR}/
+    - cat coverage.txt
+  coverage: '/TOTAL\s+\d+\s+\d+\s+\d+\.\d+%\s+\d+\s+\d+\s+\d+\.\d+%\s+\d+\s+\d+\s+(\d+\.\d+)%/'
+  artifacts:
+    paths:
+      - ${COVERAGE_CPP_DIR}
+    expire_in: 1 hour
+
+test_py:
+  stage: test
+  tags:
+    - arm
+    - raspberrypi
+  image: $IMAGE_NAME
+  script:
+    - mkdir -p ${COVERAGE_PY_DIR}
+    - PYTHONPATH=./src/python pytest --cov=./ --cov-report=term --cov-report=html:${COVERAGE_PY_DIR} tests/python | tee coverage.txt
+  coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+(?:\.\d+)?)%/'
+  artifacts:
+    paths:
+      - ${COVERAGE_PY_DIR}
+    expire_in: 1 hour
