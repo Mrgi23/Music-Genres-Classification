@@ -64,3 +64,14 @@ torch::data::Example<> AudioDataset::get(size_t index) {
     torch::Tensor targetTensor = target[index];
     return torch::data::Example<>(dataTensor, targetTensor);
 }
+
+torch::Tensor AudioSubset::data() const {
+    // Initialize vector to store all data.
+    vector<torch::Tensor> allData;
+
+    // Retreive all of the data.
+    for (size_t index : indices) { allData.push_back(dataset->get(index).data); }
+
+    // Convert data vector to tensor.
+    return torch::stack(allData, 0);
+}

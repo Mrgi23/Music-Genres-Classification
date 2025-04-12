@@ -26,7 +26,20 @@ class AudioDataset : public torch::data::Dataset<AudioDataset> {
         inline c10::Dict<std::string, torch::Tensor> const getClasses() { return classes; }
 
         inline torch::optional<size_t> size() const override { return data.size(); }
-        torch::data::Example<> get(size_t index) override;
+        virtual torch::data::Example<> get(size_t index) override;
+};
+
+class AudioSubset : public torch::data::Dataset<AudioSubset> {
+    private:
+        AudioDataset * dataset;
+        std::vector<size_t> indices;
+    public:
+        AudioSubset(AudioDataset * dataset, std::vector<size_t> indices) : dataset(dataset), indices(indices) {}
+        ~AudioSubset() {}
+
+        inline torch::optional<size_t> size() const override { return indices.size(); }
+        torch::data::Example<> get(size_t index) override { return dataset->get(indices[index]); }
+        torch::Tensor data() const;
 };
 
 #endif
