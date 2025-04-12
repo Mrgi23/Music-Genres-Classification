@@ -5,6 +5,7 @@ using namespace std;
 
 TEST(TestDownloader, testDownloader) {
     // Define the test object.
+    fs::remove_all("../../resources");
     Downloader downloader = Downloader("../../resources");
 
     // Define the expected result.

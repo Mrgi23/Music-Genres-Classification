@@ -2,10 +2,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include "preprocessor.h"
-
-#define private public
 #include "dataset.h"
-#undef private
 
 using namespace std;
 using ::testing::_;
@@ -36,28 +33,31 @@ class TestDataset : public ::testing::Test, public ::testing::WithParamInterface
             // Create temporary root dir.
             rootPath = fs::temp_directory_path() / "resources";
             fs::create_directory(rootPath);
+            
+            if (!preload) {
+                // Create temporary genres dirs.
+                vector<string> genres = {"jazz", "rock"};
+                for (const auto& genre : genres) {
+                    fs::path dirPath = rootPath / genre;
+                    fs::create_directory(dirPath);
 
-            // Create temporary genres dirs.
-            vector<string> genres = {"jazz", "rock"};
-            for (const auto& genre : genres) {
-                fs::path dirPath = rootPath / genre;
-                fs::create_directory(dirPath);
-
-                // Create 3 temporary .wav files
-                for (int i = 0; i < 3; ++i) {
-                    fs::path filePath = dirPath / (genre + ".0000" + to_string(i) + ".wav");
-                    ofstream file(filePath);
-                    file << "Mock...Data";
+                    // Create 3 temporary .wav files
+                    for (int i = 0; i < 3; ++i) {
+                        fs::path filePath = dirPath / (genre + ".0000" + to_string(i) + ".wav");
+                        ofstream file(filePath);
+                        file << "Mock...Data";
+                    }
                 }
             }
-
-            if (preload) {
+            else {
+                // Create temporary preloaded dataset.
                 vector<torch::Tensor> data(6, torch::rand({1290, 13}));
                 vector<torch::Tensor> target(6, torch::rand(1));
                 c10::Dict<std::string, torch::Tensor> classes;
                 classes.insert("jazz", torch::tensor(0, torch::kLong));
                 classes.insert("rock", torch::tensor(1, torch::kLong));
 
+                // Save dataset.
                 fs::path datasetPath = rootPath / "dataset_cpp.pt";
                 torch::serialize::OutputArchive dataset;
                 dataset.write("data", data);
@@ -68,6 +68,7 @@ class TestDataset : public ::testing::Test, public ::testing::WithParamInterface
         }
 
         void SetUp() override {
+            // Mock temporary dataset.
             bool preload = GetParam();
             mockDataset(preload);
 
@@ -77,10 +78,12 @@ class TestDataset : public ::testing::Test, public ::testing::WithParamInterface
                 EXPECT_CALL(*mockPreprocessor, run(_)).Times(6).WillRepeatedly(Return(torch::rand({1290, 13})));
             }
 
+            // Initialize the AudioDataset.
             audioDataset = new AudioDataset(rootPath, mockPreprocessor);
         }
 
         void TearDown() override {
+            // Cleanup.
             fs::remove_all(rootPath);
             delete mockPreprocessor;
             mockPreprocessor = nullptr;
@@ -101,7 +104,7 @@ TEST_P(TestDataset, getValidOutput) {
     torch::data::Example<> sample = audioDataset->get(0);
 
     // Test the result.
-    ASSERT_EQ(sample.data.numel(), numFramesExpected * mfccSizeExpected) << "Invalid size of the samle data.";
+    ASSERT_EQ(sample.data.numel(), numFramesExpected * mfccSizeExpected) << "Invalid size of the sample data.";
     ASSERT_EQ(sample.target.numel(), 1) << "Invalid size of the sample target";
 }
 

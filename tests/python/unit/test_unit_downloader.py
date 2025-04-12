@@ -3,6 +3,7 @@ from downloader import Downloader
 
 def test_downloader():
     # Define the test object.
+    shutil.rmtree("./resources", ignore_errors=True)
     downloader = Downloader("./resources")
 
     # Define the expected result.
@@ -11,9 +12,6 @@ def test_downloader():
 
     # Compute the result.
     root = downloader.root
-    for item in root.iterdir():
-        if item.is_dir():
-            shutil.rmtree(item)
     downloader.run()
 
     # Test the result.
