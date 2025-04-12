@@ -37,14 +37,14 @@ TEST_F(TestDataset, getValidOutput) {
     uint nmfcc = audioDataset->getPreprocessor()->nmfcc;
 
     // Define the expected result.
-    size_t numFrames = size / hop + 1;
-    size_t mfccSize = nmfcc;
+    size_t numFramesExpected = size / hop + 1;
+    size_t mfccSizeExpected = nmfcc;
 
     // Compute the result.
     torch::data::Example<> sample = audioDataset->get(0);
 
     // Test the result.
-    ASSERT_EQ(sample.data.numel(), numFrames * mfccSize) << "Invalid size of the samle data.";
+    ASSERT_EQ(sample.data.numel(), numFramesExpected * mfccSizeExpected) << "Invalid size of the sample data.";
     ASSERT_EQ(sample.target.numel(), 1) << "Invalid size of the sample target";
 }
 
