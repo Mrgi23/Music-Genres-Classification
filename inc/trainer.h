@@ -15,26 +15,20 @@ using torch::data::samplers::SequentialSampler;
 template <typename Sampler>
 using AudioDataloader = torch::data::StatelessDataLoader<StackedAudioSubset, Sampler>;
 
-class Trainer {
-    private:
-        MusicModel& model;
-        torch::optim::Optimizer& opt;
-        torch::nn::ModuleHolder<torch::nn::CrossEntropyLossImpl> lossFunction;
-        torch::Device device{"cpu"};
+class Trainer
+{
     public:
-        Trainer(
-            MusicModel& model,
-            torch::optim::Optimizer& opt
-        ) : model(model), opt(opt), lossFunction(torch::nn::CrossEntropyLoss()) {
-            device = torch::cuda::is_available() ? torch::Device{"cuda"} : torch::Device{"cpu"};
-            model->to(device);
-        }
-        ~Trainer() {}
+        Trainer(MusicModel & model, torch::optim::Optimizer & opt);
+        ~Trainer();
 
-        void fit(AudioDataloader<RandomSampler> &dataloader, float& loss, float& acc);
-        void eval(AudioDataloader<SequentialSampler> &dataloader, float& loss, float& acc);
+        void fit(AudioDataloader<RandomSampler> & dataloader, float & loss, float & acc);
+        void eval(AudioDataloader<SequentialSampler> & dataloader, float & loss, float & acc);
+    private:
+        MusicModel & m_model;
+        torch::optim::Optimizer & m_opt;
+        torch::nn::ModuleHolder<torch::nn::CrossEntropyLossImpl> m_lossFunction;
+        torch::Device m_device{"cpu"};
 };
-
 
 #endif
 

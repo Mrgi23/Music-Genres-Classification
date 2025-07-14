@@ -9,21 +9,23 @@ using ::testing::_;
 using ::testing::Return;
 
 // Define the mock objects.
-class MockAudioDataset : public AudioDataset {
+class MockAudioDataset : public AudioDataset
+{
     public:
-        MockAudioDataset(const fs::path& rootPath, Preprocessor * preprocessor) : AudioDataset(rootPath, preprocessor) {}
-
+        MockAudioDataset(const fs::path & rootPath, Preprocessor *preprocessor) : AudioDataset(rootPath, preprocessor) {}
         MOCK_METHOD(torch::data::Example<>, get, (size_t index), (override));
 };
 
 // Define the test objects.
-class TestSubset : public ::testing::Test {
+class TestSubset : public ::testing::Test
+{
     protected:
         fs::path rootPath;
         MockAudioDataset * mockAudiodataset = nullptr;
         AudioSubset * audioSubset = nullptr;
 
-        void mockDataset() {
+        void mockDataset()
+        {
             // Create temporary root dir.
             rootPath = fs::temp_directory_path() / "resources";
             fs::create_directory(rootPath);
@@ -44,7 +46,8 @@ class TestSubset : public ::testing::Test {
             dataset.save_to(datasetPath);
         }
 
-        void SetUp() override {
+        void SetUp() override
+        {
             // Mock temporary dataset.
             mockDataset();
 
@@ -55,7 +58,8 @@ class TestSubset : public ::testing::Test {
             audioSubset = new AudioSubset(mockAudiodataset, vector<size_t>{0, 1, 2});
         }
 
-        void TearDown() override {
+        void TearDown() override
+        {
             // Cleanup.
             fs::remove_all(rootPath);
             delete mockAudiodataset;
@@ -65,7 +69,8 @@ class TestSubset : public ::testing::Test {
         }
 };
 
-TEST_F(TestSubset, getValidOutput) {
+TEST_F(TestSubset, getValidOutput)
+{
     // Define the expected result.
     long numFramesExpected = 1290;
     long mfccSizeExpected = 13;
@@ -83,7 +88,8 @@ TEST_F(TestSubset, getValidOutput) {
     ASSERT_EQ(sample.target.numel(), 1) << "Invalid size of the sample target";
 }
 
-TEST_F(TestSubset, sizeValidOutput) {
+TEST_F(TestSubset, sizeValidOutput)
+{
     // Define the expected result.
     size_t sizeExpected = 3;
 
@@ -94,7 +100,8 @@ TEST_F(TestSubset, sizeValidOutput) {
     ASSERT_EQ(size.value(), sizeExpected) << "Invalid size of the dataset.";
 }
 
-TEST_F(TestSubset, dataValidOutput) {
+TEST_F(TestSubset, dataValidOutput)
+{
     // Define the expected result.
     size_t numSamplesExpected = 3;
     long numFramesExpected = 1290;

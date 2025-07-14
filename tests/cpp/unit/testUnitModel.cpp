@@ -3,7 +3,8 @@
 
 using namespace std;
 
-TEST(TestModel, testModel) {
+TEST(TestModel, testModel)
+{
     // Define the test object.
     MusicModel model;
 

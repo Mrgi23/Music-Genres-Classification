@@ -9,7 +9,8 @@ using ::testing::_;
 using ::testing::Return;
 
 // Define the mock objects.
-class MockPreprocessor : public Preprocessor {
+class MockPreprocessor : public Preprocessor
+{
     public:
         MockPreprocessor(
             uint size = 660000,
@@ -18,38 +19,44 @@ class MockPreprocessor : public Preprocessor {
             uint nmels = 128,
             uint nmfcc = 13
         ) : Preprocessor(size, nfft, hop, nmels, nmfcc) {}
-        MOCK_METHOD(torch::Tensor, run, (const fs::path& filePath), (override));
-        MOCK_METHOD(torch::Tensor, normalize, (const torch::Tensor& x), (override));
+        MOCK_METHOD(torch::Tensor, run, (const fs::path & filePath), (override));
+        MOCK_METHOD(torch::Tensor, normalize, (const torch::Tensor & x), (override));
 };
 
 // Define the test object.
-class TestDataset : public ::testing::Test, public ::testing::WithParamInterface<bool> {
+class TestDataset : public ::testing::Test, public ::testing::WithParamInterface<bool>
+{
     protected:
         fs::path rootPath;
         AudioDataset * audioDataset = nullptr;
         MockPreprocessor * mockPreprocessor = nullptr;
 
-        void mockDataset(bool preload) {
+        void mockDataset(bool preload)
+        {
             // Create temporary root dir.
             rootPath = fs::temp_directory_path() / "resources";
             fs::create_directory(rootPath);
-            
-            if (!preload) {
+
+            if (!preload)
+            {
                 // Create temporary genres dirs.
                 vector<string> genres = {"jazz", "rock"};
-                for (const auto& genre : genres) {
+                for (const auto& genre : genres)
+                {
                     fs::path dirPath = rootPath / genre;
                     fs::create_directory(dirPath);
 
                     // Create 3 temporary .wav files
-                    for (int i = 0; i < 3; ++i) {
+                    for (int i = 0; i < 3; ++i)
+                    {
                         fs::path filePath = dirPath / (genre + ".0000" + to_string(i) + ".wav");
                         ofstream file(filePath);
                         file << "Mock...Data";
                     }
                 }
             }
-            else {
+            else
+            {
                 // Create temporary preloaded dataset.
                 vector<torch::Tensor> data(6, torch::rand({1290, 13}));
                 vector<torch::Tensor> target(6, torch::rand(1));
@@ -67,14 +74,16 @@ class TestDataset : public ::testing::Test, public ::testing::WithParamInterface
             }
         }
 
-        void SetUp() override {
+        void SetUp() override
+        {
             // Mock temporary dataset.
             bool preload = GetParam();
             mockDataset(preload);
 
             // Mock the Preprocessor.
             mockPreprocessor = new MockPreprocessor();
-            if (!preload) {
+            if (!preload)
+            {
                 EXPECT_CALL(*mockPreprocessor, run(_)).Times(6).WillRepeatedly(Return(torch::rand({1290, 13})));
             }
 
@@ -82,7 +91,8 @@ class TestDataset : public ::testing::Test, public ::testing::WithParamInterface
             audioDataset = new AudioDataset(rootPath, mockPreprocessor);
         }
 
-        void TearDown() override {
+        void TearDown() override
+        {
             // Cleanup.
             fs::remove_all(rootPath);
             delete mockPreprocessor;
@@ -92,7 +102,8 @@ class TestDataset : public ::testing::Test, public ::testing::WithParamInterface
         }
 };
 
-TEST_P(TestDataset, getValidOutput) {
+TEST_P(TestDataset, getValidOutput)
+{
     // Define the expected result.
     long numFramesExpected = 1290;
     long mfccSizeExpected = 13;
@@ -108,7 +119,8 @@ TEST_P(TestDataset, getValidOutput) {
     ASSERT_EQ(sample.target.numel(), 1) << "Invalid size of the sample target";
 }
 
-TEST_P(TestDataset, sizeValidOutput) {
+TEST_P(TestDataset, sizeValidOutput)
+{
     // Define the expected result.
     size_t sizeExpected = 6;
 
@@ -119,14 +131,15 @@ TEST_P(TestDataset, sizeValidOutput) {
     ASSERT_EQ(size.value(), sizeExpected) << "Invalid size of the dataset.";
 }
 
-TEST_P(TestDataset, classesValidOutput) {
+TEST_P(TestDataset, classesValidOutput)
+{
     // Define the expected result.
     c10::Dict<std::string, torch::Tensor> classesExpected;
     classesExpected.insert("jazz", torch::tensor(0, torch::kLong));
     classesExpected.insert("rock", torch::tensor(1, torch::kLong));
 
     // Compute the result.
-    c10::Dict<std::string, torch::Tensor> classes = audioDataset->getClasses();
+    c10::Dict<std::string, torch::Tensor> classes = audioDataset->classes();
 
     // Test the result.
     ASSERT_EQ(classes.size(), classesExpected.size()) << "Invalid number of classes.";

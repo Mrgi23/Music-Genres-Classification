@@ -10,13 +10,15 @@
 using namespace std;
 
 // Define the test object.
-class TestSubset : public ::testing::Test {
+class TestSubset : public ::testing::Test
+{
     protected:
         Preprocessor * preprocessor = nullptr;
         AudioDataset * audioDataset = nullptr;
         AudioSubset * audioSubset = nullptr;
 
-        void SetUp() override {
+        void SetUp() override
+        {
             fs::path datasetPath = "../../resources";
             preprocessor = new Preprocessor();
             audioDataset = new AudioDataset(datasetPath, preprocessor);
@@ -36,7 +38,8 @@ class TestSubset : public ::testing::Test {
             audioSubset = new AudioSubset(audioDataset, indices);
         }
 
-        void TearDown() override {
+        void TearDown() override
+        {
             delete preprocessor;
             preprocessor = nullptr;
             delete audioDataset;
@@ -46,11 +49,12 @@ class TestSubset : public ::testing::Test {
         }
 };
 
-TEST_F(TestSubset, getValidOutput) {
+TEST_F(TestSubset, getValidOutput)
+{
     // Collect the parameters.
-    uint size = audioSubset->dataset->getPreprocessor()->size;
-    uint hop = audioSubset->dataset->getPreprocessor()->hop;
-    uint nmfcc = audioSubset->dataset->getPreprocessor()->nmfcc;
+    uint size = audioSubset->m_dataset->preprocessor()->m_size;
+    uint hop = audioSubset->m_dataset->preprocessor()->m_hop;
+    uint nmfcc = audioSubset->m_dataset->preprocessor()->m_nmfcc;
 
     // Define the expected result.
     size_t numFramesExpected = size / hop + 1;
@@ -64,7 +68,8 @@ TEST_F(TestSubset, getValidOutput) {
     ASSERT_EQ(sample.target.numel(), 1) << "Invalid size of the sample target";
 }
 
-TEST_F(TestSubset, sizeValidOutput) {
+TEST_F(TestSubset, sizeValidOutput)
+{
     // Define the expected result.
     size_t sizeExpected = 500;
 
@@ -75,11 +80,12 @@ TEST_F(TestSubset, sizeValidOutput) {
     ASSERT_EQ(size.value(), sizeExpected) << "Invalid size of the dataset.";
 }
 
-TEST_F(TestSubset, dataValidOutput) {
+TEST_F(TestSubset, dataValidOutput)
+{
     // Collect the parameters.
-    uint size = audioSubset->dataset->getPreprocessor()->size;
-    uint hop = audioSubset->dataset->getPreprocessor()->hop;
-    uint nmfcc = audioSubset->dataset->getPreprocessor()->nmfcc;
+    uint size = audioSubset->m_dataset->preprocessor()->m_size;
+    uint hop = audioSubset->m_dataset->preprocessor()->m_hop;
+    uint nmfcc = audioSubset->m_dataset->preprocessor()->m_nmfcc;
 
     // Define the expected result.
     size_t numSamplesExpected = 500;

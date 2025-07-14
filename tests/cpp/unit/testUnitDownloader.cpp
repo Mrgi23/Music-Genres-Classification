@@ -3,7 +3,8 @@
 
 using namespace std;
 
-TEST(TestDownloader, testDownloader) {
+TEST(TestDownloader, testDownloader)
+{
     // Define the test object.
     fs::remove_all("../../resources");
     Downloader downloader = Downloader("../../resources");
@@ -13,16 +14,23 @@ TEST(TestDownloader, testDownloader) {
     uint nFilesExpected = 999U;
 
     // Compute the result.
-    fs::path root = downloader.getRoot();
+    fs::path root = downloader.root();
     downloader.run();
     downloader.run();
 
     // Test the result.
     uint nFolders = 0U;
     uint nFiles = 0U;
-    for (auto& entry : fs::recursive_directory_iterator(root)) {
-        if (fs::is_directory(entry)) { nFolders++; }
-        else if (entry.path().extension() == ".wav") { nFiles++; }
+    for (auto& entry : fs::recursive_directory_iterator(root))
+    {
+        if (fs::is_directory(entry))
+        {
+            nFolders++;
+        }
+        else if (entry.path().extension() == ".wav")
+        {
+            nFiles++;
+        }
     }
     ASSERT_EQ(nFolders, nFoldersExpected) << "Invalid number of the dataset classes.";
     ASSERT_EQ(nFiles, nFilesExpected) << "Invalid number of the dataset samples.";

@@ -1,11 +1,7 @@
 #include <algorithm>
 #include <gtest/gtest.h>
 #include "downloader.h"
-
-#define private public
 #include "preprocessor.h"
-#undef private
-
 #include "dataset.h"
 #include "model.h"
 #include "trainer.h"
@@ -13,7 +9,8 @@
 using namespace std;
 
 // Define the test object.
-class TestTrainer : public ::testing::Test {
+class TestTrainer : public ::testing::Test
+{
     protected:
         Preprocessor * preprocessor = nullptr;
         AudioDataset * audioDataset = nullptr;
@@ -22,7 +19,8 @@ class TestTrainer : public ::testing::Test {
         Trainer * trainer = nullptr;
         int size;
 
-        void SetUp() override {
+        void SetUp() override
+        {
             size = 2;
 
             // Download and create dataset.
@@ -48,7 +46,8 @@ class TestTrainer : public ::testing::Test {
 
         }
 
-        void TearDown() override {
+        void TearDown() override
+        {
             // Cleanup.
             delete preprocessor;
             preprocessor = nullptr;
@@ -63,7 +62,8 @@ class TestTrainer : public ::testing::Test {
         }
 };
 
-TEST_F(TestTrainer, fitValidOutput) {
+TEST_F(TestTrainer, fitValidOutput)
+{
     // Create the DataLoader.
     std::unique_ptr<AudioDataloader<RandomSampler>> dataloader = torch::data::make_data_loader<RandomSampler>(
         audioSubset->map(Stack<>()),
@@ -79,7 +79,8 @@ TEST_F(TestTrainer, fitValidOutput) {
     ASSERT_GT(avgLoss, 0) << "Invalid train loss value.";
 }
 
-TEST_F(TestTrainer, sizeValidOutput) {
+TEST_F(TestTrainer, sizeValidOutput)
+{
     // Create the DataLoader.
     std::unique_ptr<AudioDataloader<SequentialSampler>> dataloader = torch::data::make_data_loader<SequentialSampler>(
         audioSubset->map(Stack<>()),

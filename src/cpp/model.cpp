@@ -1,6 +1,7 @@
 #include "model.h"
 
-MusicModelImpl::MusicModelImpl() {
+MusicModelImpl::MusicModelImpl()
+{
     // First layer.
     conv1 = torch::nn::Conv2d(torch::nn::Conv2dOptions(1, 512, 3).stride(1).padding(1).bias(false));
     register_module("conv1", conv1);
@@ -34,7 +35,13 @@ MusicModelImpl::MusicModelImpl() {
     register_module("output", output);
 }
 
-torch::Tensor MusicModelImpl::forward(torch::Tensor x) {
+MusicModelImpl::~MusicModelImpl()
+{
+
+}
+
+torch::Tensor MusicModelImpl::forward(torch::Tensor x)
+{
     // Apply first layer.
     x = maxPool->forward(torch::relu(bn1->forward(conv1->forward(x))));
 
@@ -53,4 +60,10 @@ torch::Tensor MusicModelImpl::forward(torch::Tensor x) {
     x = dropout->forward(x);
     x = output->forward(x);
     return x;
+}
+
+MusicModel::MusicModel(std::shared_ptr<MusicModelImpl> impl)
+{
+    // Initialize the model from external implementation.
+    this->impl_ = impl;
 }

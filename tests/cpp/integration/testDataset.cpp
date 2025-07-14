@@ -10,19 +10,22 @@
 using namespace std;
 
 // Define the test object.
-class TestDataset : public ::testing::Test {
+class TestDataset : public ::testing::Test
+{
     protected:
         AudioDataset * audioDataset = nullptr;
         Preprocessor * preprocessor = nullptr;
 
-        void SetUp() override {
+        void SetUp() override
+        {
             fs::path datasetPath = "../../resources";
             Downloader(datasetPath).run();
             preprocessor = new Preprocessor();
             audioDataset = new AudioDataset(datasetPath, preprocessor);
         }
 
-        void TearDown() override {
+        void TearDown() override
+        {
             delete preprocessor;
             preprocessor = nullptr;
             delete audioDataset;
@@ -30,11 +33,12 @@ class TestDataset : public ::testing::Test {
         }
 };
 
-TEST_F(TestDataset, getValidOutput) {
+TEST_F(TestDataset, getValidOutput)
+{
     // Collect the parameters.
-    uint size = audioDataset->getPreprocessor()->size;
-    uint hop = audioDataset->getPreprocessor()->hop;
-    uint nmfcc = audioDataset->getPreprocessor()->nmfcc;
+    uint size = audioDataset->preprocessor()->m_size;
+    uint hop = audioDataset->preprocessor()->m_hop;
+    uint nmfcc = audioDataset->preprocessor()->m_nmfcc;
 
     // Define the expected result.
     size_t numFramesExpected = size / hop + 1;
@@ -48,7 +52,8 @@ TEST_F(TestDataset, getValidOutput) {
     ASSERT_EQ(sample.target.numel(), 1) << "Invalid size of the sample target";
 }
 
-TEST_F(TestDataset, sizeValidOutput) {
+TEST_F(TestDataset, sizeValidOutput)
+{
     // Define the expected result.
     size_t sizeExpected = 999;
 
@@ -59,7 +64,8 @@ TEST_F(TestDataset, sizeValidOutput) {
     ASSERT_EQ(size.value(), sizeExpected) << "Invalid size of the dataset.";
 }
 
-TEST_F(TestDataset, classesValidOutput) {
+TEST_F(TestDataset, classesValidOutput)
+{
     // Define the expected result.
     c10::Dict<std::string, torch::Tensor> classesExpected;
     classesExpected.insert("blues", torch::tensor(0, torch::kLong));
@@ -74,11 +80,12 @@ TEST_F(TestDataset, classesValidOutput) {
     classesExpected.insert("rock", torch::tensor(9, torch::kLong));
 
     // Compute the result.
-    c10::Dict<std::string, torch::Tensor> classes = audioDataset->getClasses();
+    c10::Dict<std::string, torch::Tensor> classes = audioDataset->classes();
 
     // Test the result.
     ASSERT_EQ(classes.size(), classesExpected.size()) << "Invalid number of classes.";
-    for (const auto& pair : classes) {
+    for (const auto &pair : classes)
+    {
         ASSERT_TRUE(classesExpected.contains(pair.key())) << "Invalid class.";
         ASSERT_TRUE(torch::equal(pair.value(), classesExpected.at(pair.key()))) << "Invalid class.";
     }

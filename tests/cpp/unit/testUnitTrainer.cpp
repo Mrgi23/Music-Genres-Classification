@@ -15,21 +15,22 @@ using ::testing::Invoke;
 #include <iostream>
 
 // Define the mock objects.
-class MockAudioDataset : public AudioDataset {
+class MockAudioDataset : public AudioDataset
+{
     public:
-        MockAudioDataset(const fs::path& rootPath, Preprocessor * preprocessor) : AudioDataset(rootPath, preprocessor) {}
-
+        MockAudioDataset(const fs::path & rootPath, Preprocessor * preprocessor) : AudioDataset(rootPath, preprocessor) {}
         MOCK_METHOD(torch::data::Example<>, get, (size_t index), (override));
 };
-class MockMusicModelImpl : public MusicModelImpl {
+class MockMusicModelImpl : public MusicModelImpl
+{
     public:
         MockMusicModelImpl() : MusicModelImpl() {}
-
         MOCK_METHOD(torch::Tensor, forward, (torch::Tensor x), (override));
 };
 
 // Define the test objects.
-class TestTrainer : public ::testing::Test {
+class TestTrainer : public ::testing::Test
+{
     protected:
         fs::path rootPath;
         MockAudioDataset * mockAudioDataset = nullptr;
@@ -39,7 +40,8 @@ class TestTrainer : public ::testing::Test {
         Trainer * trainer = nullptr;
         int size;
 
-        void mockDataset() {
+        void mockDataset()
+        {
             // Create temporary root dir.
             rootPath = fs::temp_directory_path() / "resources";
             fs::create_directory(rootPath);
@@ -60,7 +62,8 @@ class TestTrainer : public ::testing::Test {
             dataset.save_to(datasetPath);
         }
 
-        void SetUp() override {
+        void SetUp() override
+        {
             // Mock temporary dataset.
             mockDataset();
 
@@ -85,7 +88,8 @@ class TestTrainer : public ::testing::Test {
             trainer = new Trainer(*mockMusicModel, *adamOpt);
         }
 
-        void TearDown() override {
+        void TearDown() override
+        {
             // Cleanup.
             delete mockAudioDataset;
             mockAudioDataset = nullptr;
@@ -98,7 +102,8 @@ class TestTrainer : public ::testing::Test {
         }
 };
 
-TEST_F(TestTrainer, fitValidOutput) {
+TEST_F(TestTrainer, fitValidOutput)
+{
     // Define the expected result.
     float avgLossExpected = logf(10);
 
@@ -125,7 +130,8 @@ TEST_F(TestTrainer, fitValidOutput) {
     ASSERT_NEAR(avgLoss, avgLossExpected, 1e-6) << "Invalid train loss value.";
 }
 
-TEST_F(TestTrainer, evalValidOutput) {
+TEST_F(TestTrainer, evalValidOutput)
+{
     // Define the expected result.
     float avgLossExpected = logf(10);
 
