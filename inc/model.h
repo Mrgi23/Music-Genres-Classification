@@ -5,7 +5,13 @@
 
 #include <torch/torch.h>
 
-class MusicModelImpl : public torch::nn::Module {
+class MusicModelImpl : public torch::nn::Module
+{
+    public:
+    	MusicModelImpl();
+      	~MusicModelImpl();
+
+      	virtual torch::Tensor forward(torch::Tensor x);
     private:
         // First layer.
         torch::nn::Conv2d conv1{nullptr};
@@ -27,20 +33,12 @@ class MusicModelImpl : public torch::nn::Module {
         torch::nn::Linear linear{nullptr};
         torch::nn::Dropout dropout{nullptr};
         torch::nn::Linear output{nullptr};
-    public:
-        MusicModelImpl();
-        ~MusicModelImpl() {}
-        virtual torch::Tensor forward(torch::Tensor x);
 };
 
 struct MusicModel : torch::nn::ModuleHolder<MusicModelImpl>
 {
-  using torch::nn::ModuleHolder<MusicModelImpl>::ModuleHolder;
-
-  explicit MusicModel(std::shared_ptr<MusicModelImpl> impl)
-  {
-    this->impl_ = std::move(impl);
-  }
+    using torch::nn::ModuleHolder<MusicModelImpl>::ModuleHolder;
+    explicit MusicModel(std::shared_ptr<MusicModelImpl> impl);
 };
 
 #endif

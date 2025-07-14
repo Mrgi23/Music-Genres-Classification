@@ -15,6 +15,19 @@ class Downloader():
         # Create dataset folder.
         self.__root.mkdir(exist_ok=True)
 
+    def run(self) -> None:
+        # Download and extract dataset if it does not exists.
+        if not self.__dataset_exists():
+            # Download dataset.
+            self.__dataset_download()
+
+            # Extract dataset.
+            self.__dataset_extract()
+
+    @property
+    def root(self) -> Path:
+        return self.__root
+
     def __dataset_exists(self) -> bool:
         # Check if .wav files exist.
         return any(file for file in self.__root.rglob("*.wav"))
@@ -52,16 +65,3 @@ class Downloader():
         # Remove single corrupted file.
         corrupted_file = self.__root / "jazz" / "jazz.00054.wav"
         corrupted_file.unlink()
-
-    def run(self) -> None:
-        # Download and extract dataset if it does not exists.
-        if not self.__dataset_exists():
-            # Download dataset.
-            self.__dataset_download()
-
-            # Extract dataset.
-            self.__dataset_extract()
-
-    @property
-    def root(self) -> Path:
-        return self.__root
