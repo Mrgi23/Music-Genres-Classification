@@ -30,37 +30,10 @@ find_package(Torch QUIET)
 if (Torch_FOUND)
   message(STATUS "Torch found")
 else()
-  message(STATUS "Torch not found, downloading...")
-  set(TORCH_ROOT "${ROOT_DIR}/external")
-
-  # Find compatible version
-  if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-    set(TORCH_LINK "https://www.dropbox.com/scl/fi/8pnp439i692aoa8t7bcu4/libtorch_x86.tar.gz?rlkey=44d6859tj8b8kzu057uycoia0&st=pl15e6u9&dl=0")
-    set(TORCH_DIR "${TORCH_ROOT}/libtorch_x86")
-    set(TORCH_ARCHIVE "${TORCH_ROOT}/libtorch_x86.tar.gz")
-  elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-    set(TORCH_LINK "https://www.dropbox.com/scl/fi/8b5jp3xou8kndon682vvc/libtorch_aarch64.tar.gz?rlkey=u6fez9q85jhfxwdvuq6vnshow&st=wm5go67m&dl=0")
-    set(TORCH_DIR "${TORCH_ROOT}/libtorch_aarch64")
-    set(TORCH_ARCHIVE "${TORCH_ROOT}/libtorch_aarch64.tar.gz")
-  else()
-    message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
-  endif()
-
-  # Extract precompiled libraries
-  if(NOT EXISTS "${TORCH_DIR}/lib")
-    file(MAKE_DIRECTORY "${TORCH_ROOT}")
-    execute_process(
-      COMMAND bash -c "curl -L -A 'curl/7.68.0' -o ${TORCH_ARCHIVE} ${TORCH_LINK} "
-    )
-    execute_process(
-      COMMAND bash -c "tar -xzf ${TORCH_ARCHIVE} -C ${TORCH_ROOT} && rm ${TORCH_ARCHIVE}"
-      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    )
-  endif()
-
-  message(STATUS "Extracting to ${TORCH_DIR}...")
-  message(STATUS "Torch extracting done")
-  find_package(Torch REQUIRED PATHS "${TORCH_DIR}")
+  message(STATUS "Torch not found, setting up...")
+  include("${ROOT_DIR}/cmake/SetupTorch.cmake")
+  message(STATUS "Torch setup done")
+  find_package(Torch REQUIRED)
 endif()
 
 # Include Google Test and Google Mock
