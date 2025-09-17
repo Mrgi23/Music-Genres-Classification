@@ -25,6 +25,9 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+# Find OpenMP
+find_package(OpenMP REQUIRED)
+
 # Install Torch
 find_package(Torch QUIET)
 if (Torch_FOUND)
@@ -58,8 +61,8 @@ add_executable(unitTests "${UNIT_TEST_SOURCES}" "${CXX_SOURCES}")
 add_executable(integrationTests "${INTEGRATION_TEST_SOURCES}" "${CXX_SOURCES}")
 
 # Link with Google Test, Torch, etc.
-target_link_libraries(unitTests aubio curl gtest gtest_main gmock "${TORCH_LIBRARIES}" pthread zip)
-target_link_libraries(integrationTests aubio curl gtest gtest_main gmock "${TORCH_LIBRARIES}" pthread zip)
+target_link_libraries(unitTests aubio curl gtest gtest_main OpenMP::OpenMP_CXX gmock "${TORCH_LIBRARIES}" pthread zip)
+target_link_libraries(integrationTests aubio curl gtest gtest_main gmock OpenMP::OpenMP_CXX "${TORCH_LIBRARIES}" pthread zip)
 
 # Enable code coverage flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping -O0")
