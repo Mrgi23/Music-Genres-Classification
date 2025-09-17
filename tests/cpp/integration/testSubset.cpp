@@ -10,7 +10,7 @@
 using namespace std;
 
 // Define the test object.
-class TestSubset : public ::testing::Test
+class TestDatasetTestSubset : public ::testing::Test
 {
     protected:
         Preprocessor * preprocessor = nullptr;
@@ -19,6 +19,7 @@ class TestSubset : public ::testing::Test
 
         void SetUp() override
         {
+            // Create dataset.
             fs::path datasetPath = "../../resources";
             preprocessor = new Preprocessor();
             audioDataset = new AudioDataset(datasetPath, preprocessor);
@@ -35,6 +36,7 @@ class TestSubset : public ::testing::Test
             // Select random indices.
             std::vector<size_t> indices(pool.begin(), pool.begin() + 500);
 
+            // Create subset.
             audioSubset = new AudioSubset(audioDataset, indices);
         }
 
@@ -49,7 +51,7 @@ class TestSubset : public ::testing::Test
         }
 };
 
-TEST_F(TestSubset, getValidOutput)
+TEST_F(TestDatasetTestSubset, getValidOutput)
 {
     // Collect the parameters.
     uint size = audioSubset->m_dataset->preprocessor()->m_size;
@@ -68,7 +70,7 @@ TEST_F(TestSubset, getValidOutput)
     ASSERT_EQ(sample.target.numel(), 1) << "Invalid size of the sample target";
 }
 
-TEST_F(TestSubset, sizeValidOutput)
+TEST_F(TestDatasetTestSubset, sizeValidOutput)
 {
     // Define the expected result.
     size_t sizeExpected = 500;
@@ -80,7 +82,7 @@ TEST_F(TestSubset, sizeValidOutput)
     ASSERT_EQ(size.value(), sizeExpected) << "Invalid size of the dataset.";
 }
 
-TEST_F(TestSubset, dataValidOutput)
+TEST_F(TestDatasetTestSubset, dataValidOutput)
 {
     // Collect the parameters.
     uint size = audioSubset->m_dataset->preprocessor()->m_size;

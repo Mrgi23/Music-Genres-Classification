@@ -17,7 +17,7 @@ class MockAudioDataset : public AudioDataset
 };
 
 // Define the test objects.
-class TestSubset : public ::testing::Test
+class Unit04_TestSubset : public ::testing::Test
 {
     protected:
         fs::path rootPath;
@@ -69,7 +69,7 @@ class TestSubset : public ::testing::Test
         }
 };
 
-TEST_F(TestSubset, getValidOutput)
+TEST_F(Unit04_TestSubset, getValidOutput)
 {
     // Define the expected result.
     long numFramesExpected = 1290;
@@ -88,7 +88,7 @@ TEST_F(TestSubset, getValidOutput)
     ASSERT_EQ(sample.target.numel(), 1) << "Invalid size of the sample target";
 }
 
-TEST_F(TestSubset, sizeValidOutput)
+TEST_F(Unit04_TestSubset, sizeValidOutput)
 {
     // Define the expected result.
     size_t sizeExpected = 3;
@@ -100,7 +100,7 @@ TEST_F(TestSubset, sizeValidOutput)
     ASSERT_EQ(size.value(), sizeExpected) << "Invalid size of the dataset.";
 }
 
-TEST_F(TestSubset, dataValidOutput)
+TEST_F(Unit04_TestSubset, dataValidOutput)
 {
     // Define the expected result.
     size_t numSamplesExpected = 3;

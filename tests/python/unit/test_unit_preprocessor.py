@@ -1,6 +1,5 @@
 import pytest
 import torch
-from downloader import Downloader
 from preprocessor import Preprocessor
 
 # Define the test object.
@@ -15,7 +14,6 @@ def test_preprocessor_run_valid_output(preprocessor):
     mfcc_size_expected = preprocessor._Preprocessor__n_mfcc
 
     # Compute the result.
-    Downloader().run()
     mfcc = preprocessor.run(file_path)
 
     # Test the result.

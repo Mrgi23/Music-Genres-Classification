@@ -38,7 +38,7 @@ class TestTrainer : public ::testing::Test
         std::shared_ptr<MockMusicModelImpl> mockMusicModelImpl;
         MusicModel * mockMusicModel = nullptr;
         Trainer * trainer = nullptr;
-        int size;
+        int batch_size;
 
         void mockDataset()
         {
@@ -71,8 +71,8 @@ class TestTrainer : public ::testing::Test
             mockAudioDataset = new MockAudioDataset(rootPath, nullptr);
 
             // Create actuall subset.
-            size = 6;
-            std::vector<size_t> indices(size);
+            batch_size = 6;
+            std::vector<size_t> indices(batch_size);
             std::iota(indices.begin(), indices.end(), 0);
             audioSubset = new AudioSubset(mockAudioDataset, indices);
 
@@ -110,15 +110,15 @@ TEST_F(TestTrainer, fitValidOutput)
     // Mock the DataLoader.
     std::unique_ptr<AudioDataloader<RandomSampler>> mockDataloader = torch::data::make_data_loader<RandomSampler>(
         audioSubset->map(Stack<>()),
-        torch::data::DataLoaderOptions().batch_size(size)
+        torch::data::DataLoaderOptions().batch_size(batch_size)
     );
     torch::Tensor data = torch::zeros({1, 1290, 13});
     torch::Tensor target = torch::randint(10, {}, torch::kLong);
-    EXPECT_CALL(*mockAudioDataset, get(_)).Times(size).WillRepeatedly(Return(torch::data::Example<>(data, target)));
+    EXPECT_CALL(*mockAudioDataset, get(_)).Times(batch_size).WillRepeatedly(Return(torch::data::Example<>(data, target)));
 
     // Mock the MusicModel.
     EXPECT_CALL(*mockMusicModelImpl, forward(_)).WillOnce(Return(
-        torch::zeros({size, 10}, torch::TensorOptions().requires_grad(true))
+        torch::zeros({batch_size, 10}, torch::TensorOptions().requires_grad(true))
     ));
 
     // Compute the result.
@@ -138,15 +138,15 @@ TEST_F(TestTrainer, evalValidOutput)
     // Mock the DataLoader.
     std::unique_ptr<AudioDataloader<SequentialSampler>> mockDataloader = torch::data::make_data_loader<SequentialSampler>(
         audioSubset->map(Stack<>()),
-        torch::data::DataLoaderOptions().batch_size(size)
+        torch::data::DataLoaderOptions().batch_size(batch_size)
     );
     torch::Tensor data = torch::zeros({1, 1290, 13});
     torch::Tensor target = torch::randint(10, {}, torch::kLong);
-    EXPECT_CALL(*mockAudioDataset, get(_)).Times(size).WillRepeatedly(Return(torch::data::Example<>(data, target)));
+    EXPECT_CALL(*mockAudioDataset, get(_)).Times(batch_size).WillRepeatedly(Return(torch::data::Example<>(data, target)));
 
     // Mock the MusicModel.
     EXPECT_CALL(*mockMusicModelImpl, forward(_)).WillOnce(Return(
-        torch::zeros({size, 10}, torch::TensorOptions().requires_grad(false))
+        torch::zeros({batch_size, 10}, torch::TensorOptions().requires_grad(false))
     ));
 
     // Compute the result.

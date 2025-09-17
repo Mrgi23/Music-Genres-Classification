@@ -1,13 +1,11 @@
 import pytest
 import torch
-from downloader import Downloader
 from preprocessor import Preprocessor
 from dataset import AudioDataset
 
 # Define the test object.
 @pytest.fixture
 def audio_dataset():
-    Downloader().run()
     preprocessor = Preprocessor()
     return AudioDataset("./resources", preprocessor)
 

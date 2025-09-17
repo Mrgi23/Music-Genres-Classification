@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include "downloader.h"
 
 #define private public
 #include "preprocessor.h"
@@ -22,7 +21,6 @@ TEST_F(TestPreprocessor, runValidOutput)
     uint mfccSizeExpected = preprocessor.m_nmfcc;
 
     // Compute the result
-    Downloader("../../resources").run();
     torch::Tensor mfcc = preprocessor.run(filePath);
 
     // Test the result.
