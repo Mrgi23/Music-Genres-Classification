@@ -1,3 +1,4 @@
+from joblib import Parallel, delayed
 from pathlib import Path
 import torch
 from torch.utils.data import Dataset
@@ -21,6 +22,7 @@ class AudioDataset(Dataset):
             self.__classes = {}
 
             # Iterate through the dataset.
+            tasks = []
             for dir_path in sorted(root_path.iterdir()):
                 if dir_path.is_dir():
                     # Add new class if it does not exist.
@@ -28,11 +30,16 @@ class AudioDataset(Dataset):
                     if genre not in self.__classes:
                         self.__classes[genre] = torch.tensor(len(self.__classes), dtype=torch.long)
 
-                    # Iterate through one class and collect all files.
-                    for file_path in dir_path.iterdir():
+                    # Iterate through one class and collect all tasks for parallelization.
+                    for file_path in sorted(dir_path.iterdir()):
                         if file_path.suffix == ".wav":
-                            self.__data.append(preprocessor.run(file_path))
-                            self.__target.append(self.__classes[genre])
+                            tasks.append((file_path, self.__classes[genre]))
+
+            results = Parallel(n_jobs=8)(
+                delayed(lambda f, t: (preprocessor.run(f), t))(file_path, target)
+                for file_path, target in tasks
+            )
+            self.__data, self.__target = zip(*results)
 
             # Save new dataset.
             torch.save((self.__data, self.__target, self.__classes), dataset_path)
@@ -49,6 +56,10 @@ class AudioDataset(Dataset):
     @property
     def preprocessor(self) -> Preprocessor:
         return self.__preprocessor
+
+    @property
+    def data(self) -> list:
+        return self.__data
 
     @property
     def classes(self) -> dict:

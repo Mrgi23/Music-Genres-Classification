@@ -1,5 +1,9 @@
 #include <algorithm>
+#include <omp.h>
 #include "dataset.h"
+
+
+#include <iostream>
 
 using namespace std;
 
@@ -29,6 +33,9 @@ AudioDataset::AudioDataset(const fs::path & rootPath, Preprocessor * preprocesso
     }
     else
     {
+        // Parallel tasks.
+        std::vector<std::pair<fs::path, std::string>> tasks;
+
         // Collect the directories (genres) and sort the in alphabetical order.
         vector<fs::path> directories;
         for (const auto &entry : fs::directory_iterator(rootPath))
@@ -58,12 +65,27 @@ AudioDataset::AudioDataset(const fs::path & rootPath, Preprocessor * preprocesso
             }
             sort(files.begin(), files.end());
 
-            // Iterate through one class and collect all data.
+            // Iterate through one class and collect all data for parallel tasks.
             for (const auto &sampleEntry : files)
             {
-                m_data.push_back(m_preprocessor->run(sampleEntry));
-                m_target.push_back(m_classes.at(genre));
+                tasks.emplace_back(sampleEntry, genre);
             }
+        }
+
+        size_t nTasks = tasks.size();
+        m_data.resize(nTasks);
+        m_target.resize(nTasks);
+
+        // Parallelize dataset loading.
+        #pragma omp parallel for num_threads(8)
+        for (size_t i = 0; i < nTasks; i++)
+        {
+            const auto& [file, genre] = tasks[i];
+            auto data = m_preprocessor->run(file);
+            auto target = m_classes.at(genre);
+
+            m_data[i] = data;
+            m_target[i] = target;
         }
 
         // Save new dataset.

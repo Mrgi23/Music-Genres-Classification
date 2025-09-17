@@ -64,6 +64,20 @@ def test_dataset_len_valid_output(audio_dataset):
     # Test the result.
     assert(size == size_expected), "Invalid size of the dataset."
 
+def test_dataset_data_valid_output(audio_dataset):
+    # Define the expected result.
+    size_expected = 6
+    num_frames = 1290
+    mfcc_size = 13
+
+    # Compute the result.
+    size = len(audio_dataset.data)
+    data = audio_dataset.data[0]
+
+    # Test the result.
+    assert(size == size_expected), "Invalid size of the dataset."
+    assert(data.numel() == num_frames * mfcc_size), "Invalid size of the samle data."
+
 def test_dataset_classes_valid_output(audio_dataset):
     # Define the expected result.
     classes_expected = {
