@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include "downloader.h"
 
 #define private public
 #include "preprocessor.h"
@@ -18,8 +17,8 @@ class TestDataset : public ::testing::Test
 
         void SetUp() override
         {
+            // Create dataset.
             fs::path datasetPath = "../../resources";
-            Downloader(datasetPath).run();
             preprocessor = new Preprocessor();
             audioDataset = new AudioDataset(datasetPath, preprocessor);
         }
