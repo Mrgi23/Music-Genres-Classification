@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <gtest/gtest.h>
-#include "downloader.h"
 #include "preprocessor.h"
 #include "dataset.h"
 #include "model.h"
@@ -17,20 +16,18 @@ class TestTrainer : public ::testing::Test
         AudioSubset * audioSubset = nullptr;
         MusicModel * musicModel = nullptr;
         Trainer * trainer = nullptr;
-        int size;
+        int batch_size;
 
         void SetUp() override
         {
-            size = 2;
-
-            // Download and create dataset.
+            // Create dataset.
             fs::path datasetPath = "../../resources";
-            Downloader(datasetPath).run();
             preprocessor = new Preprocessor();
             audioDataset = new AudioDataset(datasetPath, preprocessor);
 
             // Create subset of dataset.
-            std::vector<size_t> indices(size);
+            batch_size = 2;
+            std::vector<size_t> indices(batch_size);
             iota(indices.begin(), indices.end(), 0);
             audioSubset = new AudioSubset(audioDataset, indices);
 
@@ -43,7 +40,6 @@ class TestTrainer : public ::testing::Test
                 torch::optim::AdamOptions(1e-3)
             );
             trainer = new Trainer(*musicModel, *adamOpt);
-
         }
 
         void TearDown() override
@@ -67,7 +63,7 @@ TEST_F(TestTrainer, fitValidOutput)
     // Create the DataLoader.
     std::unique_ptr<AudioDataloader<RandomSampler>> dataloader = torch::data::make_data_loader<RandomSampler>(
         audioSubset->map(Stack<>()),
-        torch::data::DataLoaderOptions().batch_size(size)
+        torch::data::DataLoaderOptions().batch_size(batch_size)
     );
 
     // Compute the result.
@@ -84,7 +80,7 @@ TEST_F(TestTrainer, sizeValidOutput)
     // Create the DataLoader.
     std::unique_ptr<AudioDataloader<SequentialSampler>> dataloader = torch::data::make_data_loader<SequentialSampler>(
         audioSubset->map(Stack<>()),
-        torch::data::DataLoaderOptions().batch_size(size)
+        torch::data::DataLoaderOptions().batch_size(batch_size)
     );
 
     // Compute the result.

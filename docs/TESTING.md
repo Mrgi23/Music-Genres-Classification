@@ -118,7 +118,7 @@ make coverage
 #### Python Code Coverage
 ```sh
 source .venv/bin/activate
-PYTHONPATH=./src/python pytest --cov=./ --cov-report=html:reports/htmlcov/python tests/python
+PYTHONPATH=./src/python pytest --cov-report=html:reports/htmlcov/python
 ```
 
 ### Coverage Report Locations
