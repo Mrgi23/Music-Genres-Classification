@@ -1,9 +1,11 @@
+coverage
 librosa
 matplotlib
 numpy
 pytest
 pytest-cov
 pytest-mock
+pytest-order
 requests
 scikit-learn
 scipy

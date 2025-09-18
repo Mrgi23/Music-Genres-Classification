@@ -38,7 +38,7 @@ The Python dependencies required for both application and testing are listed in 
 ### Installation
 #### 1. Linux/WSL
 ```sh
-sudo apt update && sudo apt install -y cmake clang curl make lcov libaubio-dev libcurl4-openssl-dev libzip-dev llvm python3.10 python3.10-dev python3.10-venv
+sudo apt update && sudo apt install -y cmake clang curl make lcov libaubio-dev libomp-dev libcurl4-openssl-dev libzip-dev llvm python3.10 python3.10-dev python3.10-venv
 
 python -m venv .venv
 source .venv/bin/activate
@@ -118,7 +118,7 @@ make coverage
 #### Python Code Coverage
 ```sh
 source .venv/bin/activate
-PYTHONPATH=./src/python pytest --cov=./ --cov-report=html:reports/htmlcov/python tests/python
+PYTHONPATH=./src/python pytest --cov-report=html:reports/htmlcov/python
 ```
 
 ### Coverage Report Locations

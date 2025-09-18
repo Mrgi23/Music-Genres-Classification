@@ -14,6 +14,7 @@ The **Music Genres Classification** is a deep learning project that leverages co
 ## Documentation
 - [**System Architecture**](docs/ARCHITECTURE.md) – Structural breakdown of the system.
 - [**Mathematical Background**](docs/MATH.md) – Theoretical and mathematical principles.
+- [**CNN Architecture**](docs/CNN.md) - Breakdown of the Convolution Neural Network architecture.
 - [**Testing & Validation**](docs/TESTING.md) – Methods for verifying accuracy and performance.
 - [**Building Guide**](docs/BUILD.md) - Requirements and build guide.
 

@@ -73,7 +73,7 @@ build_cpp:
     - mkdir -p ${BUILD_DIR}
     - cd ${BUILD_DIR}
     - cmake ..
-    - cmake --build . --parallel ${nproc}
+    - cmake --build . --parallel $(( $(nproc) / 2 ))
   artifacts:
     paths:
       - ${BUILD_DIR}
@@ -110,7 +110,8 @@ test_py:
   image: $IMAGE_NAME
   script:
     - mkdir -p ${COVERAGE_PY_DIR}
-    - PYTHONPATH=./src/python pytest --cov=./ --cov-report=term --cov-report=html:${COVERAGE_PY_DIR} tests/python | tee coverage.txt
+    - export PYTEST_ADDOPTS="--cov-report=html:${COVERAGE_PY_DIR}"
+    - PYTHONPATH=./src/python pytest | tee coverage.txt
   coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+(?:\.\d+)?)%/'
   artifacts:
     paths:
