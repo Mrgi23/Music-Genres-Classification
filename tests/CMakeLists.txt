@@ -65,7 +65,7 @@ target_link_libraries(unitTests aubio curl gtest gtest_main OpenMP::OpenMP_CXX g
 target_link_libraries(integrationTests aubio curl gtest gtest_main gmock OpenMP::OpenMP_CXX "${TORCH_LIBRARIES}" pthread zip)
 
 # Enable code coverage flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping -O0 -g0")
 
 # Create report folder
 file(MAKE_DIRECTORY "${ROOT_DIR}/reports/htmlcov/cpp")

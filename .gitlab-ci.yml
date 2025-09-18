@@ -73,7 +73,7 @@ build_cpp:
     - mkdir -p ${BUILD_DIR}
     - cd ${BUILD_DIR}
     - cmake ..
-    - cmake --build . --parallel ${nproc}
+    - cmake --build . --parallel $(( $(nproc) / 2 ))
   artifacts:
     paths:
       - ${BUILD_DIR}
