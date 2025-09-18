@@ -6,10 +6,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Update apt and install required packages:
 # - cmake, clang, llvm, git for building
-# - libcurl4-openssl-dev, libopenblas-dev, liblapack-dev, libzip-dev for execution
+# - libcurl4-openssl-dev, libomp-dev, libopenblas-dev, liblapack-dev, libzip-dev for execution
 # - python3.10 and related packages for Python
 # - lcov for coverage tools
-RUN apt update && apt install -y \
+RUN  apt-get update && apt-get upgrade -y && apt-get install -y \
     cmake \
     clang \
     curl \
@@ -18,6 +18,7 @@ RUN apt update && apt install -y \
     lcov \
     libaubio-dev \
     libcurl4-openssl-dev \
+    libomp-dev \
     libopenblas-dev \
     liblapack-dev \
     libzip-dev \

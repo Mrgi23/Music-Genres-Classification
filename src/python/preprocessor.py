@@ -27,20 +27,6 @@ class Preprocessor():
         self.__mean = torch.zeros((1 + size // hop, n_mfcc), dtype=torch.float)
         self.__std = torch.ones((1 + size // hop, n_mfcc), dtype=torch.float)
 
-    def __load_and_crop(
-        self,
-        file_path: Path
-    ) -> tuple[np.ndarray, float]:
-        try:
-            # Load audio signal from the file.
-            audio_signal, sr = sf.read(file_path)
-        except:
-            raise FileNotFoundError(f"Preprocessor.__load_and_crop: Invalid or corrupted file.")
-
-        # Crop the audio.
-        audio_signal = audio_signal[:self.__size]
-        return audio_signal, sr
-
     def run(
         self,
         file_path: Path
@@ -92,3 +78,17 @@ class Preprocessor():
     @std.setter
     def std(self, std: torch.Tensor) -> None:
         self.__std = std
+
+    def __load_and_crop(
+        self,
+        file_path: Path
+    ) -> tuple[np.ndarray, float]:
+        try:
+            # Load audio signal from the file.
+            audio_signal, sr = sf.read(file_path)
+        except:
+            raise FileNotFoundError(f"Preprocessor.__load_and_crop: Invalid or corrupted file.")
+
+        # Crop the audio.
+        audio_signal = audio_signal[:self.__size]
+        return audio_signal, sr

@@ -25,42 +25,18 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+# Find OpenMP
+find_package(OpenMP REQUIRED)
+
 # Install Torch
 find_package(Torch QUIET)
 if (Torch_FOUND)
   message(STATUS "Torch found")
 else()
-  message(STATUS "Torch not found, downloading...")
-  set(TORCH_ROOT "${ROOT_DIR}/external")
-
-  # Find compatible version
-  if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-    set(TORCH_LINK "https://www.dropbox.com/scl/fi/8pnp439i692aoa8t7bcu4/libtorch_x86.tar.gz?rlkey=44d6859tj8b8kzu057uycoia0&st=pl15e6u9&dl=0")
-    set(TORCH_DIR "${TORCH_ROOT}/libtorch_x86")
-    set(TORCH_ARCHIVE "${TORCH_ROOT}/libtorch_x86.tar.gz")
-  elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-    set(TORCH_LINK "https://www.dropbox.com/scl/fi/8b5jp3xou8kndon682vvc/libtorch_aarch64.tar.gz?rlkey=u6fez9q85jhfxwdvuq6vnshow&st=wm5go67m&dl=0")
-    set(TORCH_DIR "${TORCH_ROOT}/libtorch_aarch64")
-    set(TORCH_ARCHIVE "${TORCH_ROOT}/libtorch_aarch64.tar.gz")
-  else()
-    message(FATAL_ERROR "Unsupported architecture: ${CMAKE_SYSTEM_PROCESSOR}")
-  endif()
-
-  # Extract precompiled libraries
-  if(NOT EXISTS "${TORCH_DIR}/lib")
-    file(MAKE_DIRECTORY "${TORCH_ROOT}")
-    execute_process(
-      COMMAND bash -c "curl -L -A 'curl/7.68.0' -o ${TORCH_ARCHIVE} ${TORCH_LINK} "
-    )
-    execute_process(
-      COMMAND bash -c "tar -xzf ${TORCH_ARCHIVE} -C ${TORCH_ROOT} && rm ${TORCH_ARCHIVE}"
-      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    )
-  endif()
-
-  message(STATUS "Extracting to ${TORCH_DIR}...")
-  message(STATUS "Torch extracting done")
-  find_package(Torch REQUIRED PATHS "${TORCH_DIR}")
+  message(STATUS "Torch not found, setting up...")
+  include("${ROOT_DIR}/cmake/SetupTorch.cmake")
+  message(STATUS "Torch setup done")
+  find_package(Torch REQUIRED)
 endif()
 
 # Include Google Test and Google Mock
@@ -85,11 +61,11 @@ add_executable(unitTests "${UNIT_TEST_SOURCES}" "${CXX_SOURCES}")
 add_executable(integrationTests "${INTEGRATION_TEST_SOURCES}" "${CXX_SOURCES}")
 
 # Link with Google Test, Torch, etc.
-target_link_libraries(unitTests aubio curl gtest gtest_main gmock "${TORCH_LIBRARIES}" pthread zip)
-target_link_libraries(integrationTests aubio curl gtest gtest_main gmock "${TORCH_LIBRARIES}" pthread zip)
+target_link_libraries(unitTests aubio curl gtest gtest_main OpenMP::OpenMP_CXX gmock "${TORCH_LIBRARIES}" pthread zip)
+target_link_libraries(integrationTests aubio curl gtest gtest_main gmock OpenMP::OpenMP_CXX "${TORCH_LIBRARIES}" pthread zip)
 
 # Enable code coverage flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping -O0 -g0")
 
 # Create report folder
 file(MAKE_DIRECTORY "${ROOT_DIR}/reports/htmlcov/cpp")
