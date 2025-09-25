@@ -7,7 +7,7 @@ TEST(TestDownloader, testDownloader)
 {
     // Define the test object.
     fs::remove_all("../../resources");
-    Downloader downloader = Downloader("../../resources");
+    Downloader downloader("../../resources");
 
     // Define the expected result.
     uint nFoldersExpected = 10U;
