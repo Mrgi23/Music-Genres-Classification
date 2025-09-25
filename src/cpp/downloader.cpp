@@ -6,7 +6,7 @@ using namespace std;
 
 Downloader::Downloader(fs::path root, std::string url) : m_root(root), m_url(url), m_zipFile(root / "dataset.zip")
 {
-    fs::create_directories(m_root);
+
 }
 
 Downloader::~Downloader()
@@ -17,13 +17,13 @@ Downloader::~Downloader()
 void Downloader::run()
 {
     // Download and extract dataset if it does not exists.
-    if (!datasetExists())
+    if (!exists())
     {
         // Download dataset.
-        datasetDownload();
+        download(m_url, m_zipFile);
 
         // Extract dataset.
-        datasetExtract();
+        extract();
     }
 }
 
@@ -33,28 +33,17 @@ fs::path Downloader::root() const
     return m_root;
 }
 
-bool Downloader::datasetExists()
+void Downloader::download(string url, fs::path filePath)
 {
-    // Check if .wav files exist.
-    return std::any_of
-    (
-        fs::recursive_directory_iterator(m_root),
-        fs::recursive_directory_iterator(),
-        [](auto& entry)
-        {
-            return entry.path().extension() == ".wav";
-        }
-    );
-}
+    // Create file folder.
+    fs::create_directories(filePath.parent_path());
 
-void Downloader::datasetDownload()
-{
     // Create zip file.
-    ofstream out(m_zipFile, ios::binary);
+    ofstream out(filePath, ios::binary);
 
     // Setup curl for downloading dataset from the url.
     CURL * curl = curl_easy_init();
-    curl_easy_setopt(curl, CURLOPT_URL, m_url.c_str());
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeToFile);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &out);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -65,7 +54,24 @@ void Downloader::datasetDownload()
     out.close();
 }
 
-void Downloader::datasetExtract()
+bool Downloader::exists()
+{
+    // Check if .wav files exist.
+    return (
+        fs::exists(m_root) &&
+        std::any_of
+        (
+            fs::recursive_directory_iterator(m_root),
+            fs::recursive_directory_iterator(),
+            [](auto& entry)
+            {
+                return entry.path().extension() == ".wav";
+            }
+        )
+    );
+}
+
+void Downloader::extract()
 {
     // Open the zip file.
     int err = 0;

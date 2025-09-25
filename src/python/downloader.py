@@ -12,37 +12,38 @@ class Downloader():
         self.__url = url
         self.__zip_file = self.__root / "dataset.zip"
 
-        # Create dataset folder.
-        self.__root.mkdir(exist_ok=True)
-
     def run(self) -> None:
         # Download and extract dataset if it does not exists.
-        if not self.__dataset_exists():
+        if not self.__exists():
             # Download dataset.
-            self.__dataset_download()
+            Downloader.download(self.__url, self.__zip_file)
 
             # Extract dataset.
-            self.__dataset_extract()
+            self.__extract()
 
     @property
     def root(self) -> Path:
         return self.__root
 
-    def __dataset_exists(self) -> bool:
-        # Check if .wav files exist.
-        return any(file for file in self.__root.rglob("*.wav"))
+    @staticmethod
+    def download(url: str, file_path: Path) -> None:
+        # Create file folder.
+        file_path.parent.mkdir(parents=True, exist_ok=True)
 
-    def __dataset_download(self) -> None:
         # Download the dataset from the URL.
-        with requests.get(self.__url, stream=True) as req:
+        with requests.get(url, stream=True) as req:
             req.raise_for_status()
 
             # Store downloaded dataset in the zip file.
-            with open(self.__zip_file, "wb") as file:
+            with open(file_path, "wb") as file:
                 for chunk in req.iter_content(chunk_size=8192):
                     file.write(chunk)
 
-    def __dataset_extract(self):
+    def __exists(self) -> bool:
+        # Check if .wav files exist.
+        return any(file for file in self.__root.rglob("*.wav"))
+
+    def __extract(self):
         # Open the zip file.
         with zipfile.ZipFile(self.__zip_file, "r") as zip_file:
             for member in zip_file.namelist():
