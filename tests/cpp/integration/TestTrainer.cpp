@@ -1,9 +1,7 @@
+#include "Trainer.h"
+
 #include <algorithm>
 #include <gtest/gtest.h>
-#include "preprocessor.h"
-#include "dataset.h"
-#include "model.h"
-#include "trainer.h"
 
 using namespace std;
 
@@ -15,6 +13,7 @@ class TestTrainer : public ::testing::Test
         AudioDataset * audioDataset = nullptr;
         AudioSubset * audioSubset = nullptr;
         MusicModel * musicModel = nullptr;
+        ReduceLROnPlateau * scheduler = nullptr;
         Trainer * trainer = nullptr;
         int batch_size;
 
@@ -27,12 +26,15 @@ class TestTrainer : public ::testing::Test
 
             // Create subset of dataset.
             batch_size = 2;
-            std::vector<size_t> indices(batch_size);
+            vector<size_t> indices(batch_size);
             iota(indices.begin(), indices.end(), 0);
             audioSubset = new AudioSubset(audioDataset, indices);
 
             // Initialize the MusicModel.
             musicModel = new MusicModel();
+
+            // Initialize the ReduceLROnPlateau optimizer.
+            scheduler = new ReduceLROnPlateau("max", 0.5, 10);
 
             // Initialize the Trainer.
             OptimizerType type = OptimizerType::Adam;
@@ -51,15 +53,23 @@ class TestTrainer : public ::testing::Test
             audioSubset = nullptr;
             delete musicModel;
             musicModel = nullptr;
+            delete scheduler;
+            scheduler = nullptr;
             delete trainer;
             trainer = nullptr;
         }
 };
 
-TEST_F(TestTrainer, fitValidOutput)
+TEST_F(TestTrainer, AttachScheduler)
+{
+    trainer->AttachScheduler(scheduler);
+    EXPECT_NO_THROW(scheduler->UpdateLR(0.5));
+}
+
+TEST_F(TestTrainer, TrainModel)
 {
     // Create the DataLoader.
-    std::unique_ptr<AudioDataloader<RandomSampler>> dataloader = torch::data::make_data_loader<RandomSampler>(
+    unique_ptr<AudioDataloader<RandomSampler>> dataloader = torch::data::make_data_loader<RandomSampler>(
         audioSubset->map(Stack<>()),
         torch::data::DataLoaderOptions().batch_size(batch_size)
     );
@@ -67,16 +77,16 @@ TEST_F(TestTrainer, fitValidOutput)
     // Compute the result.
     float avgLoss;
     float acc;
-    trainer->fit(*dataloader, avgLoss, acc);
+    trainer->TrainModel(*dataloader, avgLoss, acc);
 
     // Test the result.
     ASSERT_GT(avgLoss, 0) << "Invalid train loss value.";
 }
 
-TEST_F(TestTrainer, sizeValidOutput)
+TEST_F(TestTrainer, EvalModel)
 {
     // Create the DataLoader.
-    std::unique_ptr<AudioDataloader<SequentialSampler>> dataloader = torch::data::make_data_loader<SequentialSampler>(
+    unique_ptr<AudioDataloader<SequentialSampler>> dataloader = torch::data::make_data_loader<SequentialSampler>(
         audioSubset->map(Stack<>()),
         torch::data::DataLoaderOptions().batch_size(batch_size)
     );
@@ -84,7 +94,7 @@ TEST_F(TestTrainer, sizeValidOutput)
     // Compute the result.
     float avgLoss;
     float acc;
-    trainer->eval(*dataloader, avgLoss, acc);
+    trainer->EvalModel(*dataloader, avgLoss, acc);
 
     // Test the result.
     ASSERT_GT(avgLoss, 0) << "Invalid validation loss value.";

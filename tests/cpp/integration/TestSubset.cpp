@@ -1,16 +1,13 @@
+#include "Dataset.h"
+
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <random>
 
-#define private public
-#include "preprocessor.h"
-#include "dataset.h"
-#undef private
-
 using namespace std;
 
 // Define the test object.
-class TestDatasetTestSubset : public ::testing::Test
+class TestSubset : public ::testing::Test
 {
     protected:
         Preprocessor * preprocessor = nullptr;
@@ -34,7 +31,7 @@ class TestDatasetTestSubset : public ::testing::Test
             shuffle(pool.begin(), pool.end(), g);
 
             // Select random indices.
-            std::vector<size_t> indices(pool.begin(), pool.begin() + 500);
+            vector<size_t> indices(pool.begin(), pool.begin() + 500);
 
             // Create subset.
             audioSubset = new AudioSubset(audioDataset, indices);
@@ -51,12 +48,12 @@ class TestDatasetTestSubset : public ::testing::Test
         }
 };
 
-TEST_F(TestDatasetTestSubset, getValidOutput)
+TEST_F(TestSubset, get)
 {
     // Collect the parameters.
-    uint size = audioSubset->m_dataset->preprocessor()->m_size;
-    uint hop = audioSubset->m_dataset->preprocessor()->m_hop;
-    uint nmfcc = audioSubset->m_dataset->preprocessor()->m_nmfcc;
+    uint size = audioSubset->GetDataset()->GetPreprocessor()->GetCfg().size;
+    uint hop = audioSubset->GetDataset()->GetPreprocessor()->GetCfg().hop;
+    uint nmfcc = audioSubset->GetDataset()->GetPreprocessor()->GetCfg().nmfcc;
 
     // Define the expected result.
     size_t numFramesExpected = size / hop + 1;
@@ -70,7 +67,7 @@ TEST_F(TestDatasetTestSubset, getValidOutput)
     ASSERT_EQ(sample.target.numel(), 1) << "Invalid size of the sample target";
 }
 
-TEST_F(TestDatasetTestSubset, sizeValidOutput)
+TEST_F(TestSubset, size)
 {
     // Define the expected result.
     size_t sizeExpected = 500;
@@ -82,12 +79,12 @@ TEST_F(TestDatasetTestSubset, sizeValidOutput)
     ASSERT_EQ(size.value(), sizeExpected) << "Invalid size of the dataset.";
 }
 
-TEST_F(TestDatasetTestSubset, dataValidOutput)
+TEST_F(TestSubset, GetStackedData)
 {
     // Collect the parameters.
-    uint size = audioSubset->m_dataset->preprocessor()->m_size;
-    uint hop = audioSubset->m_dataset->preprocessor()->m_hop;
-    uint nmfcc = audioSubset->m_dataset->preprocessor()->m_nmfcc;
+    uint size = audioSubset->GetDataset()->GetPreprocessor()->GetCfg().size;
+    uint hop = audioSubset->GetDataset()->GetPreprocessor()->GetCfg().hop;
+    uint nmfcc = audioSubset->GetDataset()->GetPreprocessor()->GetCfg().nmfcc;
 
     // Define the expected result.
     size_t numSamplesExpected = 500;
@@ -95,7 +92,7 @@ TEST_F(TestDatasetTestSubset, dataValidOutput)
     size_t mfccSizeExpected = nmfcc;
 
     // Compute the result.
-    torch::Tensor data = audioSubset->data();
+    torch::Tensor data = audioSubset->GetStackedData();
 
     // Test the result.
     ASSERT_EQ(data.numel(), numSamplesExpected * numFramesExpected * mfccSizeExpected) << "Invalid size of the data.";

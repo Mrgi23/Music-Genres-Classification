@@ -1,9 +1,7 @@
+#include "Dataset.h"
+
 #include <algorithm>
 #include <omp.h>
-#include "dataset.h"
-
-
-#include <iostream>
 
 using namespace std;
 
@@ -14,7 +12,6 @@ AudioDataset::AudioDataset(const fs::path & rootPath, Preprocessor * preprocesso
 
     if (fs::exists(datasetPath))
     {
-        // Preload existing dataset.
         torch::IValue dataIValue, targetIValue, classesIValue;
         torch::serialize::InputArchive dataset;
         dataset.load_from(datasetPath);
@@ -26,17 +23,15 @@ AudioDataset::AudioDataset(const fs::path & rootPath, Preprocessor * preprocesso
         m_target = targetIValue.toTensorVector();
         for (const auto &item : classesIValue.toGenericDict())
         {
-            string key = item.key().toStringRef();
-            torch::Tensor value = item.value().toTensor();
+            int64_t key = item.key().toInt();
+            string value = item.value().toStringRef();
             m_classes.insert(key, value);
         }
     }
     else
     {
-        // Parallel tasks.
-        std::vector<std::pair<fs::path, std::string>> tasks;
+        vector<pair<fs::path, torch::Tensor>> tasks;
 
-        // Collect the directories (genres) and sort the in alphabetical order.
         vector<fs::path> directories;
         for (const auto &entry : fs::directory_iterator(rootPath))
         {
@@ -44,17 +39,12 @@ AudioDataset::AudioDataset(const fs::path & rootPath, Preprocessor * preprocesso
         }
         sort(directories.begin(), directories.end());
 
-        // Iterate through the dataset.
         for (const auto &genreEntry : directories)
         {
-            // Add new class if it does not exist.
             string genre = genreEntry.filename().string();
-            if (m_classes.find(genre) == m_classes.end())
-            {
-                m_classes.insert(genre, torch::tensor(static_cast<int64_t>(m_classes.size()), torch::kLong));
-            }
+            torch::Tensor classTarget = torch::tensor(static_cast<int64_t>(m_classes.size()), torch::kLong);
+            m_classes.insert(classTarget.item<int64_t>(), genre);
 
-            // Collect the files for one genre and sort the in alphabetical order.
             vector<fs::path> files;
             for (const auto& entry : fs::directory_iterator(genreEntry))
             {
@@ -65,10 +55,9 @@ AudioDataset::AudioDataset(const fs::path & rootPath, Preprocessor * preprocesso
             }
             sort(files.begin(), files.end());
 
-            // Iterate through one class and collect all data for parallel tasks.
             for (const auto &sampleEntry : files)
             {
-                tasks.emplace_back(sampleEntry, genre);
+                tasks.emplace_back(sampleEntry, classTarget);
             }
         }
 
@@ -76,19 +65,30 @@ AudioDataset::AudioDataset(const fs::path & rootPath, Preprocessor * preprocesso
         m_data.resize(nTasks);
         m_target.resize(nTasks);
 
-        // Parallelize dataset loading.
+        exception_ptr eptr;
         #pragma omp parallel for num_threads(omp_get_num_procs())
         for (size_t i = 0; i < nTasks; i++)
         {
-            const auto& [file, genre] = tasks[i];
-            auto data = m_preprocessor->run(file);
-            auto target = m_classes.at(genre);
+            try
+            {
+                const auto& [file, classTarget] = tasks[i];
+                auto data = m_preprocessor->ProcessFile(file);
+                auto target = classTarget;
 
-            m_data[i] = data;
-            m_target[i] = target;
+                m_data[i] = data;
+                m_target[i] = target;
+            }
+            catch (...)
+            {
+                #pragma omp critical
+                if (!eptr)
+                    eptr = current_exception();
+            }
         }
 
-        // Save new dataset.
+        if (eptr)
+            rethrow_exception(eptr);
+
         torch::serialize::OutputArchive dataset;
         dataset.write("data", m_data);
         dataset.write("target", m_target);
@@ -97,70 +97,62 @@ AudioDataset::AudioDataset(const fs::path & rootPath, Preprocessor * preprocesso
     }
 }
 
-AudioDataset::~AudioDataset()
-{
+AudioDataset::~AudioDataset() = default;
 
+c10::Dict<int64_t, string> AudioDataset::GetClasses() const
+{
+    return m_classes;
+}
+
+Preprocessor * AudioDataset::GetPreprocessor() const
+{
+    return m_preprocessor;
 }
 
 torch::data::Example<> AudioDataset::get(size_t index)
 {
-    // Normalize and extract the data.
-    torch::Tensor dataTensor = m_preprocessor->normalize(m_data[index]);
+    torch::Tensor dataTensor = m_preprocessor->NormalizeData(m_data[index]);
     torch::Tensor targetTensor = m_target[index];
     return torch::data::Example<>(dataTensor, targetTensor);
 }
 
  torch::optional<size_t> AudioDataset::size() const
  {
-    // Get dataset size.
     return m_data.size();
  }
 
-Preprocessor * AudioDataset::preprocessor() const
+AudioSubset::AudioSubset(AudioDataset * dataset, vector<size_t> indices) : m_dataset(dataset), m_indices(indices)
 {
-    // Get the Preprocessor.
-    return m_preprocessor;
+    m_stackedData = torch::Tensor();
 }
 
-c10::Dict<std::string, torch::Tensor> AudioDataset::classes() const
+AudioSubset::~AudioSubset() = default;
+
+
+AudioDataset * AudioSubset::GetDataset() const
 {
-    // Get the classes.
-    return m_classes;
+    return m_dataset;
 }
 
-AudioSubset::AudioSubset(AudioDataset * dataset, std::vector<size_t> indices) : m_dataset(dataset), m_indices(indices)
+torch::Tensor AudioSubset::GetStackedData() const
 {
+    if (m_stackedData.defined())
+        return m_stackedData;
 
-}
+    vector<torch::Tensor> allData;
+    for (size_t index : m_indices)
+        allData.push_back(m_dataset->get(index).data);
 
-AudioSubset::~AudioSubset()
-{
-
+    m_stackedData = torch::stack(allData, 0);
+    return m_stackedData;
 }
 
 torch::data::Example<> AudioSubset::get(size_t index)
 {
-    // Extract the data.
     return m_dataset->get(m_indices[index]);
 }
 
 torch::optional<size_t> AudioSubset::size() const
 {
-    // Get subset size.
     return m_indices.size();
-}
-
-torch::Tensor AudioSubset::data() const
-{
-    // Initialize vector to store all data.
-    vector<torch::Tensor> allData;
-
-    // Retreive all of the data.
-    for (size_t index : m_indices)
-    {
-        allData.push_back(m_dataset->get(index).data);
-    }
-
-    // Convert data vector to tensor.
-    return torch::stack(allData, 0);
 }

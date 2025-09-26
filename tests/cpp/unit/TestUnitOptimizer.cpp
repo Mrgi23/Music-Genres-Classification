@@ -1,27 +1,28 @@
+#include "Optimizer.h"
+
 #include <gtest/gtest.h>
 #include <vector>
-#include "optimizer.h"
 
 using namespace std;
 
-class OptimType : public ::testing::TestWithParam<OptimizerType> {};
+class TestTypeParam : public ::testing::TestWithParam<OptimizerType> {};
 
-TEST_P(OptimType, createOutput)
+TEST_P(TestTypeParam, CreateOptimizer)
 {
     // Get testing params.
     OptimizerType type = GetParam();
 
     // Define the test object.
     OptimizerConfig cfg(1e-3);
-    std::unique_ptr<torch::optim::Optimizer> opt;
+    unique_ptr<torch::optim::Optimizer> opt;
 
     // Compute the result.
     if (type == static_cast<OptimizerType>(-1))
     {
-        EXPECT_THROW(createOptimizer(vector<torch::Tensor>{}, type, cfg, opt), invalid_argument);
+        EXPECT_THROW(CreateOptimizer(vector<torch::Tensor>{}, type, cfg, opt), invalid_argument); // CreateOptimizer: Invalid optimizer type.
         return;
     }
-    createOptimizer(vector<torch::Tensor>{}, type, cfg, opt);
+    CreateOptimizer(vector<torch::Tensor>{}, type, cfg, opt);
 
     // Test the result.
     ASSERT_NE(opt.get(), nullptr) << "Optimizer not created.";
@@ -29,7 +30,7 @@ TEST_P(OptimType, createOutput)
 
 INSTANTIATE_TEST_SUITE_P(
     TestOptimizerWithParams,
-    OptimType,
+    TestTypeParam,
     ::testing::Values(
         OptimizerType::Adam,
         OptimizerType::AdamW,
