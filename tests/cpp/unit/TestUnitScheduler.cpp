@@ -1,15 +1,15 @@
+#include "Scheduler.h"
+
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <torch/optim/adam.h>
 #include <vector>
 
-#include "scheduler.h"
-
 using namespace std;
 
-class TestScheduler : public ::testing::TestWithParam<string> {};
+class TestModeParam : public ::testing::TestWithParam<string> {};
 
-TEST_P(TestScheduler, stepOutput)
+TEST_P(TestModeParam, UpdateLR)
 {
     // Get testing params.
     string mode = GetParam();
@@ -27,16 +27,16 @@ TEST_P(TestScheduler, stepOutput)
     float lrExpected = 5e-4;
 
     // Compute the result.
-    scheduler.attachOptimizer(&opt);
+    scheduler.AttachOptimizer(&opt);
     if (mode == "max")
     {
-        scheduler.step(0.5f);
-        scheduler.step(0.4f);
+        scheduler.UpdateLR(0.5f);
+        scheduler.UpdateLR(0.4f);
     }
     else if (mode == "min")
     {
-        scheduler.step(0.4f);
-        scheduler.step(0.5f);
+        scheduler.UpdateLR(0.4f);
+        scheduler.UpdateLR(0.5f);
     }
 
     // Test the result.
@@ -45,8 +45,8 @@ TEST_P(TestScheduler, stepOutput)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    InitParam,
-    TestScheduler,
+    TestSchedulerWithParams,
+    TestModeParam,
     ::testing::Values("max", "min", "invalid"),
     [](const testing::TestParamInfo<string> & info)
     {
@@ -54,9 +54,8 @@ INSTANTIATE_TEST_SUITE_P(
     }
 );
 
-TEST(TestSchedulerNoParam, attachOptimizerInvalid)
+TEST(TestScheduler, AttachOptimizer)
 {
     ReduceLROnPlateau scheduler("max", 0.5, 0); // ReduceLROnPlateau::UpdateLR: Optimizer is not attached.
-    EXPECT_THROW(scheduler.step(0.5), runtime_error);
+    EXPECT_THROW(scheduler.UpdateLR(0.5), runtime_error);
 }
-

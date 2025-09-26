@@ -1,9 +1,10 @@
+from trainer import DeviceManager, Trainer
+
 import numpy as np
 import pytest
 import torch
-from torch.utils.data import DataLoader
 from torch.optim import Adam
-from trainer import DeviceManager, Trainer
+from torch.utils.data import DataLoader
 
 # Define the test object.
 @pytest.fixture
@@ -13,7 +14,7 @@ def trainer(mocker):
     mock_model.parameters.side_effect = lambda: [torch.nn.Parameter(torch.zeros(1))]
     return Trainer(mock_model, Adam(mock_model.parameters(), lr=1e-3))
 
-def test_trainer_fit_valid_output(trainer, mocker):
+def test_trainer_train_model(trainer, mocker):
     # Define the expected result.
     avg_loss_expected = np.log(10)
 
@@ -24,12 +25,12 @@ def test_trainer_fit_valid_output(trainer, mocker):
     mock_dataloader = DataLoader(mock_dataset, len(mock_dataset))
 
     # Compute the result.
-    avg_loss, _ = trainer.fit(mock_dataloader)
+    avg_loss, _ = trainer.train_model(mock_dataloader)
 
     # Test the result.
     assert(np.isclose(avg_loss, avg_loss_expected, atol=1e-6)), "Invalid train loss value."
 
-def test_trainer_eval_valid_output(trainer, mocker):
+def test_trainer_eval_model(trainer, mocker):
     # Define the expected result.
     avg_loss_expected = np.log(10)
 
@@ -40,7 +41,7 @@ def test_trainer_eval_valid_output(trainer, mocker):
     mock_dataloader = DataLoader(mock_dataset, len(mock_dataset))
 
     # Compute the result.
-    avg_loss, _ = trainer.eval(mock_dataloader)
+    avg_loss, _ = trainer.eval_model(mock_dataloader)
 
     # Test the result.
     assert(np.isclose(avg_loss, avg_loss_expected, atol=1e-6)), "Invalid validation loss value."

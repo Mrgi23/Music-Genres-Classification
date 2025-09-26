@@ -1,10 +1,12 @@
+#include "Scheduler.h"
+
 #include <limits>
 #include <stdexcept>
-#include "scheduler.h"
 
 using namespace std;
 
-ReduceLROnPlateau::ReduceLROnPlateau(string mode, float factor, uint patience) : m_factor(factor), m_patience(patience)
+ReduceLROnPlateau::ReduceLROnPlateau(const string & mode, float factor, uint patience)
+    : m_factor(factor), m_patience(patience)
 {
     m_opt = nullptr;
 
@@ -24,17 +26,14 @@ ReduceLROnPlateau::ReduceLROnPlateau(string mode, float factor, uint patience) :
     }
 }
 
-ReduceLROnPlateau::~ReduceLROnPlateau()
-{
+ReduceLROnPlateau::~ReduceLROnPlateau() = default;
 
-}
-
-void ReduceLROnPlateau::attachOptimizer(torch::optim::Optimizer * opt)
+void ReduceLROnPlateau::AttachOptimizer(torch::optim::Optimizer * opt)
 {
     m_opt = opt;
 }
 
-void ReduceLROnPlateau::step(float metric)
+void ReduceLROnPlateau::UpdateLR(float metric)
 {
     if (!m_opt)
     {
@@ -44,7 +43,6 @@ void ReduceLROnPlateau::step(float metric)
     bool improved = m_maximize ? (metric > m_bestMetric) : (metric < m_bestMetric);
     if (improved)
     {
-        // Metric improved, reset scheduler.
         m_bestMetric = metric;
         m_badEpochs = 0;
     }
@@ -53,7 +51,6 @@ void ReduceLROnPlateau::step(float metric)
         m_badEpochs++;
         if (m_badEpochs > m_patience)
         {
-            // Decay learning rate for all parameter groups, and reset scheduler.
             for (auto& group : m_opt->param_groups())
             {
                 float newLR = m_factor * group.options().get_lr();
