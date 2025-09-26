@@ -9,6 +9,11 @@ Trainer::Trainer(MusicModel & model, OptimizerType type, const OptimizerConfig &
 
 Trainer::~Trainer() = default;
 
+void Trainer::attachScheduler(ReduceLROnPlateau * scheduler)
+{
+    scheduler->attachOptimizer(m_opt.get());
+}
+
 void Trainer::fit(AudioDataloader<RandomSampler> & dataloader, float & loss, float & acc)
 {
     // Set model into the training mode.
