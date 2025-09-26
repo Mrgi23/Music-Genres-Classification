@@ -6,6 +6,7 @@
 #include "dataset.h"
 #include "model.h"
 #include "optimizer.h"
+#include "scheduler.h"
 
 using torch::data::datasets::MapDataset;
 using torch::data::transforms::Stack;
@@ -33,6 +34,7 @@ class Trainer
         Trainer(MusicModel & model, OptimizerType type, const OptimizerConfig & cfg);
         ~Trainer();
 
+        void attachScheduler(ReduceLROnPlateau * scheduler);
         void fit(AudioDataloader<RandomSampler> & dataloader, float & loss, float & acc);
         void eval(AudioDataloader<SequentialSampler> & dataloader, float & loss, float & acc);
     private:
