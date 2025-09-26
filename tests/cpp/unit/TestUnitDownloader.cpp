@@ -1,9 +1,10 @@
+#include "Downloader.h"
+
 #include <gtest/gtest.h>
-#include "downloader.h"
 
 using namespace std;
 
-TEST(TestDownloader, testDownloader)
+TEST(TestDownloader, DownloadAndExtract)
 {
     // Define the test object.
     fs::remove_all("../../resources");
@@ -14,14 +15,13 @@ TEST(TestDownloader, testDownloader)
     uint nFilesExpected = 999U;
 
     // Compute the result.
-    fs::path root = downloader.root();
-    downloader.run();
-    downloader.run();
+    downloader.DownloadAndExtract();
+    downloader.DownloadAndExtract();
 
     // Test the result.
     uint nFolders = 0U;
     uint nFiles = 0U;
-    for (auto& entry : fs::recursive_directory_iterator(root))
+    for (auto& entry : fs::recursive_directory_iterator(downloader.GetRootPath()))
     {
         if (fs::is_directory(entry))
         {
