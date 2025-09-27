@@ -3,8 +3,7 @@
 Trainer::Trainer(MusicModel & model, torch::optim::Optimizer & opt)
 : m_model(model), m_opt(opt), m_lossFunction(torch::nn::CrossEntropyLoss())
 {
-    m_device = torch::cuda::is_available() ? torch::Device{"cuda"} : torch::Device{"cpu"};
-    m_model->to(m_device);
+    m_model->to(DeviceManager::get());
 }
 
 Trainer::~Trainer()
@@ -25,8 +24,8 @@ void Trainer::fit(AudioDataloader<RandomSampler> & dataloader, float & loss, flo
     for (auto &batch : dataloader)
     {
         // Send data to device.
-        auto data = batch.data.to(m_device);
-        auto target = batch.target.to(m_device);
+        auto data = batch.data.to(DeviceManager::get());
+        auto target = batch.target.to(DeviceManager::get());
 
         // Zero the gradients.
         m_opt.zero_grad();
@@ -70,8 +69,8 @@ void Trainer::eval(AudioDataloader<SequentialSampler> & dataloader, float & loss
     for (auto &batch : dataloader)
     {
         // Send data to device.
-        auto data = batch.data.to(m_device);
-        auto target = batch.target.to(m_device);
+        auto data = batch.data.to(DeviceManager::get());
+        auto target = batch.target.to(DeviceManager::get());
 
         // Compute forward pass and calculate the loss.
         torch::Tensor output = m_model->forward(data);

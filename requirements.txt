@@ -6,9 +6,11 @@ pytest
 pytest-cov
 pytest-mock
 pytest-order
+pyyaml
 requests
 scikit-learn
 scipy
 soundfile
-torch
+tomli
+torch==2.8.0
 urllib3

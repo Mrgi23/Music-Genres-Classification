@@ -6,8 +6,8 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     build-essential \
     cmake \
     curl \
-    g++ \
-    gcc \
+    gcc-12 \
+    g++-12 \
     git \
     lcov \
     libaubio-dev \
