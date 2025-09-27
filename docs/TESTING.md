@@ -13,13 +13,14 @@ Testing strategies ensure the accuracy, reliability, and performance of the Musi
 - **PyTest(`pytest-cov`)** – Code coverage analysis
 
 ### Compatibility Notice
-For compatibility details, see the [Testing Framework Compatibility](COMPATIBILITY.md)
+For compatibility details, see the [Testing Framework Compatibility](COMPATIBILITY.md).
 
 ## Installing Dependencies
 Ensure that all required dependencies are installed.
 
 ### C++ Dependencies
 #### Application Dependencies
+- `cuda` - **NVIDIA** GPU acceleration runtime (**CUDA Runtime + cuBLAS/cuDNN**). For setup instructions, see [Cuda Installation](CUDA.md).
 - `aubio` – Used for audio analysis and feature extraction.
 - `curl` – Used for making HTTP requests, e.g., for downloading datasets or files.
 - `zip` – Required for extracting compressed files, such as datasets.
@@ -38,7 +39,7 @@ The Python dependencies required for both application and testing are listed in 
 ### Installation
 #### 1. Linux/WSL
 ```sh
-sudo apt update && sudo apt install -y build-essential cmake curl g++ gcc git lcov libaubio-dev libcurl4-openssl-dev liblapack-dev libomp-dev libopenblas-dev libzip-dev ninja-build python3.10 python3.10-dev python3.10-venv
+sudo apt update && sudo apt install -y build-essential cmake curl gcc-12 g++-12 git lcov libaubio-dev libcurl4-openssl-dev liblapack-dev libomp-dev libopenblas-dev libzip-dev ninja-build python3.10 python3.10-dev python3.10-venv
 
 python -m venv .venv
 source .venv/bin/activate
@@ -47,7 +48,7 @@ pip install -r requirements.txt
 
 #### 2. macOS
 ```sh
-brew update && brew install aubio cmake curl g++ gcc make lcov libzip python@3.10
+brew update && brew install aubio cmake curl gcc-12 g++-12 make lcov libzip python@3.10
 
 python -m venv .venv
 source .venv/bin/activate
@@ -107,7 +108,7 @@ Code coverage ensures tests sufficiently exercise the codebase, identifying test
 #### C++ Code Coverage
 C++ code coverage is generated using **GCC's (`gcov`)**, which only works with **GCC\G++**.
 **MSVC and MinGW are not supported for code coverage.**
-- Linux/macOS: **Native support with GCC\G++**
+- Linux: **Native support with GCC\G++**
 - Windows: **Must use WSL with GCC\G++**
 ```sh
 mkdir -p tests/build && cd tests/build

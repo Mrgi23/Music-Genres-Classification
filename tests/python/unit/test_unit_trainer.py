@@ -3,13 +3,13 @@ import pytest
 import torch
 from torch.utils.data import DataLoader
 from torch.optim import Adam
-from trainer import Trainer
+from trainer import DeviceManager, Trainer
 
 # Define the test object.
 @pytest.fixture
 def trainer(mocker):
     # Mock the MusicModel
-    mock_model = mocker.Mock(side_effect=lambda x: torch.zeros((x.size(0), 10), requires_grad=True))
+    mock_model = mocker.Mock(side_effect=lambda x: torch.zeros((x.size(0), 10), device=DeviceManager.get(), requires_grad=True))
     mock_model.parameters.side_effect = lambda: [torch.nn.Parameter(torch.zeros(1))]
     return Trainer(mock_model, Adam(mock_model.parameters(), lr=1e-3))
 

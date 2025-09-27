@@ -118,7 +118,7 @@ TEST_F(TestTrainer, fitValidOutput)
 
     // Mock the MusicModel.
     EXPECT_CALL(*mockMusicModelImpl, forward(_)).WillOnce(Return(
-        torch::zeros({batch_size, 10}, torch::TensorOptions().requires_grad(true))
+        torch::zeros({batch_size, 10}, torch::TensorOptions().device(DeviceManager::get()).requires_grad(true))
     ));
 
     // Compute the result.
@@ -146,7 +146,7 @@ TEST_F(TestTrainer, evalValidOutput)
 
     // Mock the MusicModel.
     EXPECT_CALL(*mockMusicModelImpl, forward(_)).WillOnce(Return(
-        torch::zeros({batch_size, 10}, torch::TensorOptions().requires_grad(false))
+        torch::zeros({batch_size, 10}, torch::TensorOptions().device(DeviceManager::get()).requires_grad(false))
     ));
 
     // Compute the result.

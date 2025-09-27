@@ -24,15 +24,7 @@ FetchContent_MakeAvailable(googletest)
 find_package(OpenMP REQUIRED)
 
 # ----- Torch -----
-find_package(Torch QUIET)
-if (Torch_FOUND)
-  message(STATUS "Torch found")
-else()
-  message(STATUS "Torch not found, setting up...")
-  include("${ROOT_DIR}/cmake/SetupTorch.cmake")
-  message(STATUS "Torch setup done")
-  find_package(Torch REQUIRED)
-endif()
+include("${ROOT_DIR}/cmake/SetupTorch.cmake")
 
 # ===== Sources =====
 file(GLOB CXX_SOURCES "${ROOT_DIR}/src/cpp/*.cpp")
