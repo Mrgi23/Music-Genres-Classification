@@ -1,12 +1,12 @@
 # Music Genres Classification - Compatibility
 
 ## Compatibility Issues
-- The **Music Genres Classification** is designed to run on **Linux** and **macOS**.
+- The **Music Genres Classification (C++)** is designed to run on **Linux**.
 - **On Windows, application and tests must be run inside Windows Subsystem for Linux (WSL).**
+- **Linux version must be no less than Ubunut 24.04 or any other equivalent distribution (Debian/Fedora/Arch).**
 
 ### Fully Supported Platforms
 - **Linux (Ubuntu/Debian)**
-- **macOS (Intel & Apple Silicon)**
 - **Windows (via WSL)**
 
 ### Not Supported
@@ -15,6 +15,8 @@
   - `llvm-cov` does not work natively on Windows.
   - Google Test (`gtest`) requires manual setup on naitve Windows.
   - Profiling tools like `valgrind` are not available on Windows.
+- **macOS**
+  - `cuda` is not available on macOs.
 
 ## Installing WSL with Ubuntu
 Open PowerShell as Administrator and run

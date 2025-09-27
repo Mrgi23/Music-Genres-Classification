@@ -2,6 +2,11 @@ import torch
 from torch.utils.data import DataLoader
 from model import MusicModel
 
+class DeviceManager():
+    @staticmethod
+    def get() -> str:
+        return "cuda" if torch.cuda.is_available() else "cpu"
+
 class Trainer():
     def __init__(
         self,
@@ -12,8 +17,7 @@ class Trainer():
         self.__opt = opt
         self.__loss_function = torch.nn.CrossEntropyLoss()
 
-        self.__device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.__model.to(self.__device)
+        self.__model.to(DeviceManager.get())
 
     def fit(self, dataloader: DataLoader) -> tuple[float, float]:
         # Set model int training mode.
@@ -25,8 +29,8 @@ class Trainer():
         total_samples = 0
         for data, target in dataloader:
             # Send data to device.
-            data = data.to(self.__device, non_blocking=True)
-            target = target.to(self.__device, non_blocking=True)
+            data = data.to(DeviceManager.get(), non_blocking=True)
+            target = target.to(DeviceManager.get(), non_blocking=True)
 
             # Zero the gradients.
             self.__opt.zero_grad()
@@ -61,8 +65,8 @@ class Trainer():
         with torch.no_grad():
             for data, target in dataloader:
                 # Send data to device.
-                data = data.to(self.__device, non_blocking=True)
-                target = target.to(self.__device, non_blocking=True)
+                data = data.to(DeviceManager.get(), non_blocking=True)
+                target = target.to(DeviceManager.get(), non_blocking=True)
 
                 # Compute forward pass and calculate the loss.
                 output = self.__model(data)
