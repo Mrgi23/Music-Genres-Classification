@@ -5,6 +5,7 @@
 
 #include "dataset.h"
 #include "model.h"
+#include "optimizer.h"
 
 using torch::data::datasets::MapDataset;
 using torch::data::transforms::Stack;
@@ -29,14 +30,14 @@ class DeviceManager
 class Trainer
 {
     public:
-        Trainer(MusicModel & model, torch::optim::Optimizer & opt);
+        Trainer(MusicModel & model, OptimizerType type, const OptimizerConfig & cfg);
         ~Trainer();
 
         void fit(AudioDataloader<RandomSampler> & dataloader, float & loss, float & acc);
         void eval(AudioDataloader<SequentialSampler> & dataloader, float & loss, float & acc);
     private:
         MusicModel & m_model;
-        torch::optim::Optimizer & m_opt;
+        std::unique_ptr<torch::optim::Optimizer> m_opt;
         torch::nn::ModuleHolder<torch::nn::CrossEntropyLossImpl> m_lossFunction;
 };
 

@@ -1,15 +1,13 @@
 #include "trainer.h"
 
-Trainer::Trainer(MusicModel & model, torch::optim::Optimizer & opt)
-: m_model(model), m_opt(opt), m_lossFunction(torch::nn::CrossEntropyLoss())
+Trainer::Trainer(MusicModel & model, OptimizerType type, const OptimizerConfig & cfg)
+: m_model(model), m_lossFunction(torch::nn::CrossEntropyLoss())
 {
+    createOptimizer(model->parameters(), type, cfg, m_opt);
     m_model->to(DeviceManager::get());
 }
 
-Trainer::~Trainer()
-{
-
-}
+Trainer::~Trainer() = default;
 
 void Trainer::fit(AudioDataloader<RandomSampler> & dataloader, float & loss, float & acc)
 {
@@ -28,7 +26,7 @@ void Trainer::fit(AudioDataloader<RandomSampler> & dataloader, float & loss, flo
         auto target = batch.target.to(DeviceManager::get());
 
         // Zero the gradients.
-        m_opt.zero_grad();
+        m_opt->zero_grad();
 
         // Compute forward pass and calculate the loss.
         torch::Tensor output = m_model->forward(data);
@@ -44,7 +42,7 @@ void Trainer::fit(AudioDataloader<RandomSampler> & dataloader, float & loss, flo
         loss.backward();
 
         // Update the model parameters.
-        m_opt.step();
+        m_opt->step();
 
         // Increment the total number of batches.
         numBatches++;
