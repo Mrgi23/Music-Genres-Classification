@@ -5,6 +5,7 @@
 #include "preprocessor.h"
 #include "dataset.h"
 #include "model.h"
+#include "optimizer.h"
 #include "trainer.h"
 
 using namespace std;
@@ -81,11 +82,9 @@ class TestTrainer : public ::testing::Test
             mockMusicModel = new MusicModel(std::static_pointer_cast<MusicModelImpl>(mockMusicModelImpl));
 
             // Initialize the Trainer.
-            torch::optim::Optimizer * adamOpt = new torch::optim::Adam(
-                mockMusicModel->get()->parameters(),
-                torch::optim::AdamOptions(1e-3)
-            );
-            trainer = new Trainer(*mockMusicModel, *adamOpt);
+            OptimizerType type = OptimizerType::Adam;
+            OptimizerConfig cfg(1e-3);
+            trainer = new Trainer(*mockMusicModel, type, cfg);
         }
 
         void TearDown() override
