@@ -35,11 +35,9 @@ class TestTrainer : public ::testing::Test
             musicModel = new MusicModel();
 
             // Initialize the Trainer.
-            torch::optim::Optimizer * adamOpt = new torch::optim::Adam(
-                musicModel->get()->parameters(),
-                torch::optim::AdamOptions(1e-3)
-            );
-            trainer = new Trainer(*musicModel, *adamOpt);
+            OptimizerType type = OptimizerType::Adam;
+            OptimizerConfig cfg(1e-3);
+            trainer = new Trainer(*musicModel, type, cfg);
         }
 
         void TearDown() override
