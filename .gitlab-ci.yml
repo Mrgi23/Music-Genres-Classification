@@ -72,7 +72,7 @@ build_cpp:
   script:
     - mkdir -p ${BUILD_DIR}
     - cd ${BUILD_DIR}
-    - cmake ..
+    - cmake -G Ninja ..
     - cmake --build . --parallel $(( $(nproc) / 2 ))
   artifacts:
     paths:
@@ -89,14 +89,14 @@ test_cpp:
   script:
     - mkdir -p ${COVERAGE_CPP_DIR}
     - cd ${BUILD_DIR}
-    - LLVM_PROFILE_FILE=coverageUnit.profraw ./unitTests
-    - LLVM_PROFILE_FILE=coverageIntegration.profraw ./integrationTests
-    - llvm-profdata merge -sparse coverageUnit.profraw coverageIntegration.profraw -o coverage.profdata
-    - llvm-cov export --object=./unitTests --object=./integrationTests -instr-profile=coverage.profdata -format=lcov > ${COVERAGE_CPP_DIR}/coverage.lcov
-    - llvm-cov report --object=./unitTests --object=./integrationTests -instr-profile=coverage.profdata > coverage.txt
-    - genhtml ${COVERAGE_CPP_DIR}/coverage.lcov --output-directory ${COVERAGE_CPP_DIR}/
+    - ./unitTests
+    - ./integrationTests
+    - geninfo . -o raw.info --ignore-errors inconsistent,inconsistent --ignore-errors mismatch,mismatch --rc geninfo_unexecuted_blocks=1 > /dev/null
+    - lcov -e raw.info "${ROOT_DIR}/inc*" "${ROOT_DIR}/src/cpp/*" -o "${COVERAGE_CPP_DIR}/coverage.info" --ignore-errors unused,unused > /dev/null
+    - sed -i "/D0Ev/d" "${COVERAGE_CPP_DIR}/coverage.info"
+    - genhtml ${COVERAGE_CPP_DIR}/coverage.info -o ${COVERAGE_CPP_DIR} -l > coverage.txt
     - cat coverage.txt
-  coverage: '/TOTAL\s+\d+\s+\d+\s+\d+\.\d+%\s+\d+\s+\d+\s+\d+\.\d+%\s+\d+\s+\d+\s+(\d+\.\d+)%/'
+  coverage: '/lines.*: *([0-9]+\.[0-9]+)%/'
   artifacts:
     paths:
       - ${COVERAGE_CPP_DIR}
