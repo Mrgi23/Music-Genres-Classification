@@ -90,7 +90,7 @@ add_custom_target(
   COMMAND LLVM_PROFILE_FILE=coverageUnit.profraw "./unitTests"
   COMMAND LLVM_PROFILE_FILE=coverageIntegration.profraw "./integrationTests"
   COMMAND llvm-profdata merge -sparse coverageUnit.profraw coverageIntegration.profraw -o coverage.profdata
-  COMMAND llvm-cov export --object="./unitTests" --object="./integrationTests"  -instr-profile=coverage.profdata -format=lcov > "${ROOT_DIR}/reports/htmlcov/cpp/coverage.lcov"
+  COMMAND llvm-cov export --object="./unitTests" --object="./integrationTests"  -instr-profile=coverage.profdata -format=lcov --ignore-filename-regex="tests/" > "${ROOT_DIR}/reports/htmlcov/cpp/coverage.lcov"
   COMMAND genhtml "${ROOT_DIR}/reports/htmlcov/cpp/coverage.lcov" --output-directory "${ROOT_DIR}/reports/htmlcov/cpp/"
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
 )

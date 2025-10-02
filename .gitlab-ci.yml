@@ -92,8 +92,8 @@ test_cpp:
     - LLVM_PROFILE_FILE=coverageUnit.profraw ./unitTests
     - LLVM_PROFILE_FILE=coverageIntegration.profraw ./integrationTests
     - llvm-profdata merge -sparse coverageUnit.profraw coverageIntegration.profraw -o coverage.profdata
-    - llvm-cov export --object=./unitTests --object=./integrationTests -instr-profile=coverage.profdata -format=lcov > ${COVERAGE_CPP_DIR}/coverage.lcov
-    - llvm-cov report --object=./unitTests --object=./integrationTests -instr-profile=coverage.profdata > coverage.txt
+    - llvm-cov export --object=./unitTests --object=./integrationTests -instr-profile=coverage.profdata -format=lcov --ignore-filename-regex="tests/" > ${COVERAGE_CPP_DIR}/coverage.lcov
+    - llvm-cov report --object=./unitTests --object=./integrationTests -instr-profile=coverage.profdata --ignore-filename-regex="tests/" > coverage.txt
     - genhtml ${COVERAGE_CPP_DIR}/coverage.lcov --output-directory ${COVERAGE_CPP_DIR}/
     - cat coverage.txt
   coverage: '/TOTAL\s+\d+\s+\d+\s+\d+\.\d+%\s+\d+\s+\d+\s+\d+\.\d+%\s+\d+\s+\d+\s+(\d+\.\d+)%/'
