@@ -17,6 +17,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     libopenblas-dev \
     libzip-dev \
     ninja-build \
+    pkg-config \
     python3.12 \
     python3.12-dev \
     python3.12-venv \
