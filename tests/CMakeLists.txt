@@ -8,7 +8,10 @@ project(Tests)
 
 # ===== Root Directory =====
 get_filename_component(ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
-set(TESTS_DIR "${ROOT_DIR}/tests/cpp")
+set(CMAKE_CONFIG_DIR "${ROOT_DIR}/cmake" CACHE PATH "CMake Configurations")
+
+# ===== Setup =====
+include("${CMAKE_CONFIG_DIR}/Utils.cmake")
 
 # ===== Dependencies =====
 # ----- Google Test & Google Mock -----
@@ -20,23 +23,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-# ----- OpenMP -----
-find_package(OpenMP REQUIRED)
-
-# ----- Torch -----
-include("${ROOT_DIR}/cmake/SetupTorch.cmake")
-
-# ===== Sources =====
-file(GLOB CXX_SOURCES "${ROOT_DIR}/src/cpp/*.cpp")
-
 # ===== Targets =====
+set(TESTS_DIR "${ROOT_DIR}/tests/cpp")
+
 # ----- Unit Tests -----
 file(GLOB UNIT_TEST_SOURCES "${TESTS_DIR}/unit/*.cpp")
 add_executable(unitTests "${CXX_SOURCES}" "${UNIT_TEST_SOURCES}")
 
 target_include_directories(
   unitTests PRIVATE
-  "${ROOT_DIR}/inc"
+  "${INCLUDE_DIR}"
   "${gtest_SOURCE_DIR}/include"
   "${gmock_SOURCE_DIR}/include"
   "${TORCH_INCLUDE_DIRS}"
@@ -67,7 +63,7 @@ add_executable(integrationTests "${CXX_SOURCES}" "${INTEGRATION_TEST_SOURCES}")
 
 target_include_directories(
   integrationTests PRIVATE
-  "${ROOT_DIR}/inc"
+  "${INCLUDE_DIR}"
   "${gtest_SOURCE_DIR}/include"
   "${gmock_SOURCE_DIR}/include"
   "${TORCH_INCLUDE_DIRS}"
@@ -109,7 +105,7 @@ add_custom_target(
   COMMAND ./unitTests
   COMMAND ./integrationTests
   COMMAND geninfo . -o raw.info --ignore-errors inconsistent,inconsistent --ignore-errors mismatch,mismatch --rc geninfo_unexecuted_blocks=1 > /dev/null
-  COMMAND lcov -e raw.info "${ROOT_DIR}/inc*" "${ROOT_DIR}/src/cpp/*" -o "${REPORT_FILE}" --ignore-errors unused,unused > /dev/null
+  COMMAND lcov -e raw.info "${INCLUDE_DIR}/*" "${SOURCES_DIR}/*" -o "${REPORT_FILE}" --ignore-errors unused,unused > /dev/null
   COMMAND sed -i "/D0Ev/d" "${REPORT_FILE}"
   COMMAND genhtml "${REPORT_FILE}" -o "${REPORT_DIR}"
 )
