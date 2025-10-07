@@ -48,3 +48,6 @@ external/
 
 # Torch files
 *.pt
+
+# Executables
+/bin/*
