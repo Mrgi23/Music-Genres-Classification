@@ -1,7 +1,5 @@
 #include "Trainer.h"
 
-#include <torch/cuda.h>
-
 Trainer::Trainer(MusicModel & model, const OptimizerType & type, const OptimizerConfig & cfg)
     : m_model(model), m_lossFunction(torch::nn::CrossEntropyLoss())
 {
