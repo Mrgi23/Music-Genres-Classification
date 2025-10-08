@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.10)
 # ===== Project =====
 project(MusicGenresClassification)
 
+# ===== Options =====
+option(BUILD_PYTHON "Build Python bindings" OFF)
+
 # ===== Root Directory =====
 get_filename_component(ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
 set(CMAKE_CONFIG_DIR "${ROOT_DIR}/cmake" CACHE PATH "CMake Configurations")
@@ -14,6 +17,11 @@ include("${CMAKE_CONFIG_DIR}/Utils.cmake")
 set(APP_DIR "${ROOT_DIR}/app")
 set(OUTPUT_DIR "${ROOT_DIR}/bin" CACHE PATH "Output Directory")
 set(MODULE_NAME "musicnet" CACHE STRING "Output Module Name")
+
+# ===== Setup Python Module =====
+if (BUILD_PYTHON)
+    include("${CMAKE_CONFIG_DIR}/SetupPythonModule.cmake")
+endif()
 
 # ===== Additional Dependencies =====
 # ----- Nlohmann-Json -----
