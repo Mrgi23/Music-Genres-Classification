@@ -6,6 +6,7 @@
 #include "dataset.h"
 #include "model.h"
 #include "optimizer.h"
+#include "scheduler.h"
 #include "trainer.h"
 
 using namespace std;
@@ -38,6 +39,7 @@ class TestTrainer : public ::testing::Test
         AudioSubset * audioSubset = nullptr;
         std::shared_ptr<MockMusicModelImpl> mockMusicModelImpl;
         MusicModel * mockMusicModel = nullptr;
+        ReduceLROnPlateau * scheduler = nullptr;
         Trainer * trainer = nullptr;
         int batch_size;
 
@@ -81,6 +83,8 @@ class TestTrainer : public ::testing::Test
             mockMusicModelImpl = std::make_shared<MockMusicModelImpl>();
             mockMusicModel = new MusicModel(std::static_pointer_cast<MusicModelImpl>(mockMusicModelImpl));
 
+            scheduler = new ReduceLROnPlateau("max", 0.5, 10);
+
             // Initialize the Trainer.
             OptimizerType type = OptimizerType::Adam;
             OptimizerConfig cfg(1e-3);
@@ -96,10 +100,18 @@ class TestTrainer : public ::testing::Test
             audioSubset = nullptr;
             delete mockMusicModel;
             mockMusicModel = nullptr;
+            delete scheduler;
+            scheduler = nullptr;
             delete trainer;
             trainer = nullptr;
         }
 };
+
+TEST_F(TestTrainer, attachSchedulerOutput)
+{
+    trainer->attachScheduler(scheduler);
+    EXPECT_NO_THROW(scheduler->step(0.5));
+}
 
 TEST_F(TestTrainer, fitValidOutput)
 {
