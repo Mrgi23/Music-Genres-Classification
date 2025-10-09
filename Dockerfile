@@ -1,42 +1,31 @@
-# Use Ubuntu 22.04 which includes Python 3.10
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
-# Set non-interactive mode for apt-get
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Update apt and install required packages:
-# - cmake, clang, llvm, git for building
-# - libcurl4-openssl-dev, libomp-dev, libopenblas-dev, liblapack-dev, libzip-dev for execution
-# - python3.10 and related packages for Python
-# - lcov for coverage tools
-RUN  apt-get update && apt-get upgrade -y && apt-get install -y \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+    build-essential \
     cmake \
-    clang \
     curl \
+    g++ \
+    gcc \
     git \
-    make \
     lcov \
     libaubio-dev \
     libcurl4-openssl-dev \
     libomp-dev \
-    libopenblas-dev \
-    liblapack-dev \
     libzip-dev \
-    llvm \
-    python3.10 \
-    python3.10-dev \
-    python3.10-venv \
+    ninja-build \
+    python3.12 \
+    python3.12-dev \
+    python3.12-venv \
     tar && \
+    ln -s /usr/bin/python3.12 /usr/bin/python3 && \
     rm -rf /var/lib/apt/lists/*
 
-# Set PATH to include /usr/local/bin
 ENV PATH="/usr/local/bin:${PATH}"
 
-# Create virtual environment
 RUN python3 -m venv /venv && /venv/bin/pip install --upgrade pip
 
-# Add the virtual environment's bin directory to PATH.
 ENV PATH="/venv/bin:${PATH}"
 
-# By default, run a shell.
 CMD ["/bin/bash"]
