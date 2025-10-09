@@ -6,7 +6,7 @@ Testing strategies ensure the accuracy, reliability, and performance of the Musi
 ## Testing Frameworks
 ### C++ Testing
 - **Google Test (`gtest`), Google Mock (`gmock`)** – Testing framework for C++
-- **LLVM (`llvm-cov`)** – Code coverage analysis
+- **GCOV (`gcov`)** – Code coverage analysis
 
 ### Python Testing
 - **PyTest (`pytest`, `pytest-mock`)** – Testing framework for Python
@@ -26,11 +26,11 @@ Ensure that all required dependencies are installed.
 
 #### Testing Dependencies
 - **CMake(`cmake`)** – Build system for compiling tests
-- **LLVM (`llvm-cov`)** – Required for C++ code coverage (**only works with `clang`**)
+- **GCOV (`gcov`)** – Required for C++ code coverage (**only works with `gcc` \ `g++`**)
 
-**C++ code coverage is only supported with Clang**
+**C++ code coverage is only supported with GCC\G++**
 - If using **GCC or MSVC**, code coverage will not be available.
-- Windows users must run tests inside **WSL with Clang/LLVM**.
+- Windows users must run tests inside **WSL with GCC\G++**.
 
 ### Python Dependencies
 The Python dependencies required for both application and testing are listed in the `requirements.txt` file.
@@ -38,7 +38,7 @@ The Python dependencies required for both application and testing are listed in 
 ### Installation
 #### 1. Linux/WSL
 ```sh
-sudo apt update && sudo apt install -y cmake clang curl make lcov libaubio-dev libomp-dev libcurl4-openssl-dev libzip-dev llvm python3.10 python3.10-dev python3.10-venv
+sudo apt update && sudo apt install -y build-essential cmake curl g++ gcc git lcov libaubio-dev libcurl4-openssl-dev liblapack-dev libomp-dev libopenblas-dev libzip-dev ninja-build python3.10 python3.10-dev python3.10-venv
 
 python -m venv .venv
 source .venv/bin/activate
@@ -47,7 +47,7 @@ pip install -r requirements.txt
 
 #### 2. macOS
 ```sh
-brew update && brew install aubio cmake clang curl make lcov libzip llvm python@3.10
+brew update && brew install aubio cmake curl g++ gcc make lcov libzip python@3.10
 
 python -m venv .venv
 source .venv/bin/activate
@@ -77,10 +77,10 @@ Integration tests verify that the various components of the Music Genres Classif
 ### C++ Tests
 ```sh
 mkdir -p tests/build && cd tests/build
-cmake ..
-make -j${nproc}
-make unit # Unit Tests
-make integration # Integration Tests
+cmake -G Ninja ..
+ninja -j$(nproc)
+ninja unit # Unit Tests
+ninja integration # Integration Tests
 ```
 
 ### Python Tests
@@ -105,15 +105,15 @@ Code coverage ensures tests sufficiently exercise the codebase, identifying test
 
 ### Generating Coverage Reports
 #### C++ Code Coverage
-C++ code coverage is generated using **LLVM's `llvm-cov`**, which only works with **Clang**.
+C++ code coverage is generated using **GCC's (`gcov`)**, which only works with **GCC\G++**.
 **MSVC and MinGW are not supported for code coverage.**
-- Linux/macOS: **Native support with Clang**
-- Windows: **Must use WSL with Clang/LLVM**
+- Linux/macOS: **Native support with GCC\G++**
+- Windows: **Must use WSL with GCC\G++**
 ```sh
 mkdir -p tests/build && cd tests/build
-cmake ..
-make -j${nproc}
-make coverage
+cmake -G Ninja ..
+ninja -j$(nproc)
+ninja coverage
 ```
 #### Python Code Coverage
 ```sh
@@ -139,10 +139,10 @@ The testing framework is integrated with **GitLab CI/CD**, ensuring automated te
 The pipeline is structured into the following stages:
 | **Stage**    | **Purpose** |
 |--------------|-------------|
-| **Setup**    | Builds and pushes a custom Docker image with all dependencies pre-installed (`cmake`, `clang`, `llvm`, `python3.10`, `googletest`, `googlemock`, `pytest`, etc.) |
+| **Setup**    | Builds and pushes a custom Docker image with all dependencies pre-installed (`cmake`, `g++`, `gcc`, `googletest`, `googlemock`, `lcov`, `python3.10`, `pytest`, etc.) |
 | **Update**   | Update custom Docker image's Python virtual environment with all dependencies from the `requirements.txt` |
 | **Build**    | Compiles C++ tests |
-| **Test**     | Runs both C++ (Google Test) and Python (pytest) tests, and generates coverage reports using `llvm-cov` and `pytest-cov` |
+| **Test**     | Runs both C++ (Google Test) and Python (pytest) tests, and generates coverage reports using `gcov` and `pytest-cov` |
 | **Deploy**   | Creates new tag based on the release version and publishes reports via **GitLab Pages** (only `main`) |
 
 ### When Does CI/CD Run?
