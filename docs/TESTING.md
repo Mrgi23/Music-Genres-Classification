@@ -39,7 +39,7 @@ The Python dependencies required for both application and testing are listed in 
 ### Installation
 #### 1. Linux/WSL
 ```sh
-sudo apt update && sudo apt install -y build-essential cmake curl gcc-12 g++-12 git lcov libaubio-dev libcurl4-openssl-dev liblapack-dev libomp-dev libopenblas-dev libzip-dev ninja-build python3.10 python3.10-dev python3.10-venv
+sudo apt update && sudo apt install -y build-essential cmake curl gcc-12 g++-12 git lcov libaubio-dev libcurl4-openssl-dev liblapack-dev libomp-dev libopenblas-dev libzip-dev ninja-build pkg-config python3.10 python3.10-dev python3.10-venv
 
 python -m venv .venv
 source .venv/bin/activate
