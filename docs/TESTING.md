@@ -159,9 +159,9 @@ The CI/CD pipeline is triggered in the following cases:
 
 ### GitLab Pages (Published Reports)
 Deployed via GitLab Pages, coverage reports are accessible at:
-- [Music Genres Classification - Metrics and Evaluation](https://mrgi23.gitlab.io/music-genres-classification/index.html)
-- [C++ Code Coverage Report](https://mrgi23.gitlab.io/music-genres-classification/cpp/index.html)
-- [Python Code Coverage Report](https://mrgi23.gitlab.io/music-genres-classification/python/index.html)
+- [Metrics and Evaluation](https://mrgi23.gitlab.io/music-genres-classification/index.html)
+- [C++ Code Coverage Report](https://mrgi23.gitlab.io/music-genres-classification/htmlcov/cpp/index.html)
+- [Python Code Coverage Report](https://mrgi23.gitlab.io/music-genres-classification/htmlcov/python/index.html)
 
 
 ## Next Steps
