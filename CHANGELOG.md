@@ -1,0 +1,70 @@
+
+<a name="v1.0.0"></a>
+## v1.0.0 (2025-10-14)
+
+### Features
+
+* Added binding from C++ to Python
+* Added main application
+* Added scheduler
+* Added trainer
+* Added model
+* Added subset
+* Added dataset
+* Added dataset preprocessor
+* Added dataset downloader
+
+### Performance Improvements
+
+* Added optimizer creation
+* Added CUDA support
+* Updated build tools
+* Reduced build overhead
+* Split dataset loading into multiple threads
+
+### Code Refactoring
+
+* Added file downloading for arbitrary url
+
+### Tests
+
+* Added tests for scheduler
+* Added tests for optimizer
+* Redefined scope of tests
+* Organize tests execution order
+* Added tests for trainer
+* Added tests for model
+* Added tests for subset
+* Added tests for dataset
+* Added tests for dataset preprocessor
+* Added tests for dataset downloader
+
+### CI/CD Pipelines
+
+* Added automatic GitLab Pages deployment
+* Added automatic tag deployment
+* Added CI/CD pipeline
+* Added custom Docker image
+
+### Documentation
+
+* Added build and usage guide
+* Added CNN architecture description
+* Added testing and validation overview
+* Added mathematical background for system
+* Added high-level system architecture description
+* Added general project overview
+
+### Maintenance
+
+* Added Libtorch packages to Package Registry
+* Added Python dependencies
+* Added project license
+* Added exclusion of unnecessary files
+* Added change tracking automation
+
+### Formatting
+
+* Restyled the code and added docstring
+* Reformatted code according to C++ standard
+
