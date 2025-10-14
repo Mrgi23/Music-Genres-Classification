@@ -48,3 +48,7 @@ external/
 
 # Torch files
 *.pt
+
+# Executables
+/bin/*
+!/bin/musicnet.pyi
