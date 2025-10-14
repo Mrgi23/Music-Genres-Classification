@@ -2,6 +2,7 @@ coverage
 librosa
 matplotlib
 numpy
+pandas
 pytest
 pytest-cov
 pytest-mock

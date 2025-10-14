@@ -140,7 +140,22 @@ tags:
         git tag -a "$NEW_TAG" -m "Release $NEW_TAG";
         git push --force origin "$NEW_TAG";
       fi
-      
+
+pages:
+  stage: deploy
+  only:
+    - main
+  tags:
+    - arm
+    - raspberrypi
+  image: $IMAGE_NAME
+  script:
+    - mkdir -p public
+    - cp -r ${REPORT_DIR}/. public
+  artifacts:
+    paths:
+      - public
+
 cleanup_runner:
   stage: cleanup
   tags:
