@@ -3,6 +3,7 @@ stages:
   - update
   - build
   - test
+  - deploy
   - cleanup
 
 workflow:
@@ -72,7 +73,7 @@ build_cpp:
   script:
     - mkdir -p ${BUILD_DIR}
     - cd ${BUILD_DIR}
-    - cmake ..
+    - cmake -G Ninja ..
     - cmake --build . --parallel $(( $(nproc) / 2 ))
   artifacts:
     paths:
@@ -89,14 +90,14 @@ test_cpp:
   script:
     - mkdir -p ${COVERAGE_CPP_DIR}
     - cd ${BUILD_DIR}
-    - LLVM_PROFILE_FILE=coverageUnit.profraw ./unitTests
-    - LLVM_PROFILE_FILE=coverageIntegration.profraw ./integrationTests
-    - llvm-profdata merge -sparse coverageUnit.profraw coverageIntegration.profraw -o coverage.profdata
-    - llvm-cov export --object=./unitTests --object=./integrationTests -instr-profile=coverage.profdata -format=lcov > ${COVERAGE_CPP_DIR}/coverage.lcov
-    - llvm-cov report --object=./unitTests --object=./integrationTests -instr-profile=coverage.profdata > coverage.txt
-    - genhtml ${COVERAGE_CPP_DIR}/coverage.lcov --output-directory ${COVERAGE_CPP_DIR}/
+    - ./unitTests
+    - ./integrationTests
+    - geninfo . -o raw.info --ignore-errors inconsistent,inconsistent --ignore-errors mismatch,mismatch --rc geninfo_unexecuted_blocks=1 > /dev/null
+    - lcov -e raw.info "${ROOT_DIR}/inc*" "${ROOT_DIR}/src/cpp/*" -o "${COVERAGE_CPP_DIR}/coverage.info" --ignore-errors unused,unused > /dev/null
+    - sed -i "/D0Ev/d" "${COVERAGE_CPP_DIR}/coverage.info"
+    - genhtml ${COVERAGE_CPP_DIR}/coverage.info -o ${COVERAGE_CPP_DIR} -l > coverage.txt
     - cat coverage.txt
-  coverage: '/TOTAL\s+\d+\s+\d+\s+\d+\.\d+%\s+\d+\s+\d+\s+\d+\.\d+%\s+\d+\s+\d+\s+(\d+\.\d+)%/'
+  coverage: '/lines.*: *([0-9]+\.[0-9]+)%/'
   artifacts:
     paths:
       - ${COVERAGE_CPP_DIR}
@@ -117,6 +118,43 @@ test_py:
     paths:
       - ${COVERAGE_PY_DIR}
     expire_in: 1 hour
+
+tags:
+  stage: deploy
+  only:
+    - main
+  tags:
+    - arm
+    - raspberrypi
+  image: $IMAGE_NAME
+  script:
+    - git config --global user.name "GitLab CI"
+    - git config --global user.email "gitlab-ci@example.com"
+    - git remote set-url origin https://mrgi23:$GITLAB_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+    - VERSION=$(echo "$CI_COMMIT_MESSAGE" | grep -Eiom1 'Release v[0-9]+\.[0-9]+\.[0-9]+')
+    - |
+      if [ -n "$VERSION" ]; then
+        NEW_TAG=$(echo "$VERSION" | sed 's/Release //');
+        git tag -d "$NEW_TAG" || true
+        git push origin ":refs/tags/$NEW_TAG" || true
+        git tag -a "$NEW_TAG" -m "Release $NEW_TAG";
+        git push --force origin "$NEW_TAG";
+      fi
+
+pages:
+  stage: deploy
+  only:
+    - main
+  tags:
+    - arm
+    - raspberrypi
+  image: $IMAGE_NAME
+  script:
+    - mkdir -p public
+    - cp -r ${REPORT_DIR}/. public
+  artifacts:
+    paths:
+      - public
 
 cleanup_runner:
   stage: cleanup
