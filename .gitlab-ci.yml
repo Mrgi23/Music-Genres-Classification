@@ -3,6 +3,7 @@ stages:
   - update
   - build
   - test
+  - deploy
   - cleanup
 
 workflow:
@@ -117,6 +118,28 @@ test_py:
     paths:
       - ${COVERAGE_PY_DIR}
     expire_in: 1 hour
+
+tags:
+  stage: deploy
+  only:
+    - main
+  tags:
+    - arm
+    - raspberrypi
+  image: $IMAGE_NAME
+  script:
+    - git config --global user.name "GitLab CI"
+    - git config --global user.email "gitlab-ci@example.com"
+    - git remote set-url origin https://mrgi23:$GITLAB_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+    - VERSION=$(echo "$CI_COMMIT_MESSAGE" | grep -Eiom1 'Release v[0-9]+\.[0-9]+\.[0-9]+')
+    - |
+      if [ -n "$VERSION" ]; then
+        NEW_TAG=$(echo "$VERSION" | sed 's/Release //');
+        git tag -d "$NEW_TAG" || true
+        git push origin ":refs/tags/$NEW_TAG" || true
+        git tag -a "$NEW_TAG" -m "Release $NEW_TAG";
+        git push --force origin "$NEW_TAG";
+      fi
 
 cleanup_runner:
   stage: cleanup
