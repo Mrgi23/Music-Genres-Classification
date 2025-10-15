@@ -1,0 +1,168 @@
+stages:
+  - setup
+  - update
+  - build
+  - test
+  - deploy
+  - cleanup
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "main"'
+      when: always
+    - when: never
+
+variables:
+  ROOT_DIR: ${CI_PROJECT_DIR}
+  BUILD_DIR: ${ROOT_DIR}/tests/build
+  DEPS_DIR: ${ROOT_DIR}/external
+  REPORT_DIR: ${ROOT_DIR}/reports
+  COVERAGE_CPP_DIR: ${REPORT_DIR}/htmlcov/cpp
+  COVERAGE_PY_DIR: ${REPORT_DIR}/htmlcov/python
+  IMAGE_NAME: registry.gitlab.com/mrgi23/music-genres-classification/mgc:latest
+
+setup_image:
+  stage: setup
+  rules:
+    - changes:
+      - Dockerfile
+  tags:
+    - arm
+    - raspberrypi
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker build -t mgc:latest .
+    - docker tag mgc:latest $IMAGE_NAME
+    - docker push $IMAGE_NAME
+
+update_image:
+  stage: update
+  rules:
+    - changes:
+      - Dockerfile
+      - requirements.txt
+  tags:
+    - arm
+    - raspberrypi
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker pull $IMAGE_NAME
+    - docker run -d --name temp_container $IMAGE_NAME /bin/bash -c "tail -f /dev/null"
+    - docker cp $CI_PROJECT_DIR/requirements.txt temp_container:/requirements.txt
+    - docker exec temp_container /venv/bin/pip install -r /requirements.txt
+    - docker commit temp_container $IMAGE_NAME
+    - docker push $IMAGE_NAME
+    - docker rm -f temp_container
+
+build_cpp:
+  stage: build
+  tags:
+    - arm
+    - raspberrypi
+  image: $IMAGE_NAME
+  script:
+    - mkdir -p ${BUILD_DIR}
+    - cd ${BUILD_DIR}
+    - cmake -G Ninja ..
+    - cmake --build . --parallel $(( $(nproc) / 2 ))
+  artifacts:
+    paths:
+      - ${BUILD_DIR}
+      - ${DEPS_DIR}
+    expire_in: 1 hour
+
+test_cpp:
+  stage: test
+  tags:
+    - arm
+    - raspberrypi
+  image: $IMAGE_NAME
+  script:
+    - mkdir -p ${COVERAGE_CPP_DIR}
+    - cd ${BUILD_DIR}
+    - ./unitTests
+    - ./integrationTests
+    - geninfo . -o raw.info --ignore-errors inconsistent,inconsistent --ignore-errors mismatch,mismatch --rc geninfo_unexecuted_blocks=1 > /dev/null
+    - lcov -e raw.info "${ROOT_DIR}/inc*" "${ROOT_DIR}/src/cpp/*" -o "${COVERAGE_CPP_DIR}/coverage.info" --ignore-errors unused,unused > /dev/null
+    - sed -i "/D0Ev/d" "${COVERAGE_CPP_DIR}/coverage.info"
+    - genhtml ${COVERAGE_CPP_DIR}/coverage.info -o ${COVERAGE_CPP_DIR} -l > coverage.txt
+    - cat coverage.txt
+  coverage: '/lines.*: *([0-9]+\.[0-9]+)%/'
+  artifacts:
+    paths:
+      - ${COVERAGE_CPP_DIR}
+    expire_in: 1 hour
+
+test_py:
+  stage: test
+  tags:
+    - arm
+    - raspberrypi
+  image: $IMAGE_NAME
+  script:
+    - mkdir -p ${COVERAGE_PY_DIR}
+    - export PYTEST_ADDOPTS="--cov-report=html:${COVERAGE_PY_DIR}"
+    - PYTHONPATH=./src/python pytest | tee coverage.txt
+  coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+(?:\.\d+)?)%/'
+  artifacts:
+    paths:
+      - ${COVERAGE_PY_DIR}
+    expire_in: 1 hour
+
+tags:
+  stage: deploy
+  only:
+    - main
+  tags:
+    - arm
+    - raspberrypi
+  image: $IMAGE_NAME
+  script:
+    - git config --global user.name "GitLab CI"
+    - git config --global user.email "gitlab-ci@example.com"
+    - git remote set-url origin https://mrgi23:$GITLAB_TOKEN@$CI_SERVER_HOST/$CI_PROJECT_PATH.git
+    - VERSION=$(echo "$CI_COMMIT_MESSAGE" | grep -Eiom1 'Release v[0-9]+\.[0-9]+\.[0-9]+')
+    - |
+      if [ -n "$VERSION" ]; then
+        NEW_TAG=$(echo "$VERSION" | sed 's/Release //');
+        git tag -d "$NEW_TAG" || true
+        git push origin ":refs/tags/$NEW_TAG" || true
+        git tag -a "$NEW_TAG" -m "Release $NEW_TAG";
+        git push --force origin "$NEW_TAG";
+      fi
+
+pages:
+  stage: deploy
+  only:
+    - main
+  tags:
+    - arm
+    - raspberrypi
+  image: $IMAGE_NAME
+  script:
+    - mkdir -p public
+    - cp -r ${REPORT_DIR}/. public
+  artifacts:
+    paths:
+      - public
+
+cleanup_runner:
+  stage: cleanup
+  tags:
+    - arm
+    - raspberrypi
+  image: docker:latest
+  script:
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker:latest docker system prune -af --volumes
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker:latest docker volume ls -qf dangling=true | xargs -r docker volume rm
+  when: always
