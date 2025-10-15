@@ -1,7 +1,8 @@
-import shutil
 from downloader import Downloader
 
-def test_downloader():
+import shutil
+
+def test_downloader_download_and_extract():
     # Define the test object.
     shutil.rmtree("./resources", ignore_errors=True)
     downloader = Downloader("./resources")
@@ -11,13 +12,12 @@ def test_downloader():
     n_files_expected = 999
 
     # Compute the result.
-    root = downloader.root
-    downloader.run()
+    downloader.download_and_extract()
 
     # Test the result.
     n_folders = 0
     n_files = 0
-    for entry in root.rglob("*"):
+    for entry in downloader.root_path.rglob("*"):
         if entry.is_dir():
             n_folders += 1
         if entry.is_file() and entry.suffix == ".wav":
