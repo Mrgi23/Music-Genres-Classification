@@ -35,3 +35,9 @@ TEST(TestDownloader, DownloadAndExtract)
     ASSERT_EQ(nFolders, nFoldersExpected) << "Invalid number of the dataset classes.";
     ASSERT_EQ(nFiles, nFilesExpected) << "Invalid number of the dataset samples.";
 }
+
+TEST(TestDownloader, DownloadAndExtractThrowError)
+{
+    Downloader downloader("./", "https://artifacts.mrgi23.com/Music-Genres-Classification/dataset/invalid.tar.zst"); // Downloader::DownloadAndExtract: Invalid URL."
+    EXPECT_THROW(downloader.DownloadAndExtract(), invalid_argument);
+}

@@ -1,7 +1,8 @@
 from pathlib import Path
-import requests
+import pycurl
 import shutil
-import zipfile
+import tarfile
+import zstandard
 
 class Downloader():
     """
@@ -16,7 +17,7 @@ class Downloader():
     def __init__(
         self,
         root_path: Path,
-        url: str = "https://www.kaggle.com/api/v1/datasets/download/andradaolteanu/gtzan-dataset-music-genre-classification"
+        url: str = "https://artifacts.mrgi23.com/Music-Genres-Classification/dataset/dataset.tar.zst"
     ) -> None:
         """
         Construct a new Downloader object.
@@ -26,11 +27,11 @@ class Downloader():
         root_path : Path
             Root path where the dataset will be stored.
         url : str, optional
-            URL from which the dataset should be downloaded, by default the GTZAN dataset Kaggle API endpoint.
+            URL from which the dataset should be downloaded, by default the Cloudflare R2 storage API endpoint.
         """
         self.__root_path = Path(root_path)
         self.__url = url
-        self.__zip_file = self.__root_path / "dataset.zip"
+        self.__archive_file = self.__root_path / "dataset.tar.zst"
 
     @staticmethod
     def download_from_url(file_path: Path, url: str) -> None:
@@ -45,12 +46,21 @@ class Downloader():
         """
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with requests.get(url, stream=True) as req:
-            req.raise_for_status()
+        curl = pycurl.Curl()
+        curl.setopt(pycurl.URL, url)
+        curl.setopt(pycurl.BUFFERSIZE, 1024 * 1024)
+        curl.setopt(pycurl.FAILONERROR, 1)
+        curl.setopt(pycurl.FOLLOWLOCATION, 1)
 
-            with open(file_path, "wb") as file:
-                for chunk in req.iter_content(chunk_size=8192):
-                    file.write(chunk)
+        try:
+            with open(file_path, "wb") as out:
+                curl.setopt(pycurl.WRITEDATA, out)
+                curl.perform()
+                curl.close()
+                return True
+        except pycurl.error:
+            curl.close()
+            return False
 
     @property
     def root_path(self) -> Path:
@@ -71,9 +81,10 @@ class Downloader():
         and extracts the archive into the root path.
         """
         if not self.__is_existing():
-            Downloader.download_from_url(self.__zip_file, self.__url)
-
-            self.__extract_file()
+            if Downloader.download_from_url(self.__archive_file, self.__url):
+                self.__extract_file()
+            else:
+                raise ConnectionRefusedError(f"Downloader.download_and_extract: URL: {self.__url} is invalid.")
 
     def __is_existing(self) -> bool:
         """
@@ -91,17 +102,18 @@ class Downloader():
         """
         Extract the downloaded archive into the root path.
         """
-        with zipfile.ZipFile(self.__zip_file, "r") as zip_file:
-            for member in zip_file.namelist():
-                if member.startswith("Data/genres_original/") and member.endswith(".wav"):
-                    relative_path = Path(member).relative_to("Data/genres_original")
-                    save_path = self.__root_path / relative_path
-                    save_path.parent.mkdir(parents=True, exist_ok=True)
+        chunk_size = 1024 * 1024
+        with open(self.__archive_file, "rb") as archive:
+            dctx = zstandard.ZstdDecompressor()
+            with dctx.stream_reader(archive, read_size=chunk_size) as reader:
+                with tarfile.open(fileobj=reader, mode="r|") as tar:
+                    for member in tar:
+                        if member.isfile():
+                            save_path = self.__root_path / Path(member.name)
+                            save_path.parent.mkdir(parents=True, exist_ok=True)
 
-                    with zip_file.open(member) as source, open(save_path, "wb") as destination:
-                        shutil.copyfileobj(source, destination)
-
-        self.__zip_file.unlink()
-
-        corrupted_file = self.__root_path / "jazz" / "jazz.00054.wav"
-        corrupted_file.unlink()
+                            source = tar.extractfile(member)
+                            if source is not None:
+                                with source, open(save_path, "wb", buffering=chunk_size) as destination:
+                                    shutil.copyfileobj(source, destination, length=chunk_size)
+        self.__archive_file.unlink()
