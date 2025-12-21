@@ -22,15 +22,14 @@ Ensure that all required dependencies are installed.
 #### Application Dependencies
 - `cuda` - **NVIDIA** GPU acceleration runtime (**CUDA Runtime + cuBLAS/cuDNN**). For setup instructions, see [Cuda Installation](CUDA.md).
 - `aubio` – Used for audio analysis and feature extraction.
-- `curl` – Used for making HTTP requests, e.g., for downloading datasets or files.
-- `zip` – Required for extracting compressed files, such as datasets.
+- `oras` - Required for **GitHub** packages (`libtorch`)
 
 #### Testing Dependencies
 - **CMake(`cmake`)** – Build system for compiling tests
 - **GCOV (`gcov`)** – Required for C++ code coverage (**only works with `gcc` \ `g++`**)
 
 **C++ code coverage is only supported with GCC\G++**
-- If using **GCC or MSVC**, code coverage will not be available.
+- If using **Clang or MSVC**, code coverage will not be available.
 - Windows users must run tests inside **WSL with GCC\G++**.
 
 ### Python Dependencies
@@ -39,7 +38,9 @@ The Python dependencies required for both application and testing are listed in 
 ### Installation
 #### 1. Linux/WSL
 ```sh
-sudo apt update && sudo apt install -y build-essential cmake curl gcc-12 g++-12 git lcov libaubio-dev libcurl4-openssl-dev liblapack-dev libomp-dev libopenblas-dev libzip-dev ninja-build pkg-config python3.10 python3.10-dev python3.10-venv
+sudo apt update && sudo apt install -y build-essential cmake gcc-12 g++-12 git lcov libaubio-dev libarchive-dev libcurl4-openssl-dev liblapack-dev libomp-dev libopenblas-dev ninja-build pkg-config python3.12 python3.12-dev python3.12-venv
+
+sudo snap install oras --classic
 
 python -m venv .venv
 source .venv/bin/activate
@@ -48,7 +49,7 @@ pip install -r requirements.txt
 
 #### 2. macOS
 ```sh
-brew update && brew install aubio cmake curl gcc-12 g++-12 make lcov libzip python@3.10
+brew update && brew install python@3.12
 
 python -m venv .venv
 source .venv/bin/activate
@@ -134,34 +135,34 @@ firefox ./<directory>/index.html
 ```
 
 ## CI/CD Integration
-The testing framework is integrated with **GitLab CI/CD**, ensuring automated testing and coverage reporting on every merge request.
+The testing framework is integrated with **GitHub Actions**, ensuring automated testing and coverage reporting on every merge request.
 
 ### CI/CD Pipeline Overview
 The pipeline is structured into the following stages:
 | **Stage**    | **Purpose** |
 |--------------|-------------|
-| **Setup**    | Builds and pushes a custom Docker image with all dependencies pre-installed (`cmake`, `g++`, `gcc`, `googletest`, `googlemock`, `lcov`, `python3.10`, `pytest`, etc.) |
+| **Setup**    | Builds and pushes a custom Docker image with all dependencies pre-installed (`cmake`, `g++`, `gcc`, `googletest`, `googlemock`, `lcov`, `python3.12`, `pytest`, etc.) |
 | **Update**   | Update custom Docker image's Python virtual environment with all dependencies from the `requirements.txt` |
 | **Build**    | Compiles C++ tests |
 | **Test**     | Runs both C++ (Google Test) and Python (pytest) tests, and generates coverage reports using `gcov` and `pytest-cov` |
-| **Deploy**   | Creates new tag based on the release version and publishes reports via **GitLab Pages** (only `main`) |
+| **Deploy**   | Creates new tag based on the release version and publishes reports via **GitHub Pages** (only `main`) |
 
 ### When Does CI/CD Run?
 The CI/CD pipeline is triggered in the following cases:
 - On every merge request to `develop` branch
 - On every merge commit to `main` branch
-- On manual pipeline execution from **GitLab UI**
+- On manual pipeline execution from **GitHub UI**
 
 **The pipeline is blocked if tests fail**, ensuring only validated code is merged.
 
-### GitLab CI/CD Coverage Badge
-![Coverage](https://gitlab.com/mrgi23/music-genres-classification/badges/main/coverage.svg)
+### GitHub CI/CD Coverage Badge
+![Coverage](https://codecov.io/gh/Mrgi23/Music-Genres-Classification/branch/main/graph/badge.svg)
 
-### GitLab Pages (Published Reports)
-Deployed via GitLab Pages, coverage reports are accessible at:
-- [Metrics and Evaluation](https://mrgi23.gitlab.io/music-genres-classification/index.html)
-- [C++ Code Coverage Report](https://mrgi23.gitlab.io/music-genres-classification/htmlcov/cpp/index.html)
-- [Python Code Coverage Report](https://mrgi23.gitlab.io/music-genres-classification/htmlcov/python/index.html)
+### GitHub Pages (Published Reports)
+Deployed via GitHub Pages, coverage reports are accessible at:
+- [Metrics and Evaluation](https://mrgi23.github.io/Music-Genres-Classification/)
+- [C++ Code Coverage Report](https://mrgi23.github.io/Music-Genres-Classification/htmlcov/cpp/)
+- [Python Code Coverage Report](https://mrgi23.github.io/Music-Genres-Classification/htmlcov/python/)
 
 
 ## Next Steps

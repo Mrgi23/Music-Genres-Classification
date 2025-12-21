@@ -1,0 +1,19 @@
+name: Setup Python toolchain
+
+inputs:
+  python-version:
+    required: false
+    default: "3.12"
+  requirements-file:
+    required: false
+    default: "requirements.txt"
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        python --version
+        python -m pip install --upgrade pip
+        pip install -r "${{ inputs.requirements-file }}"

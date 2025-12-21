@@ -175,9 +175,10 @@ void LoadModel(const toml::table & config, const fs::path & modelPath)
         string url = baseUrl + "/" + package + "/" + version + "/" + package + "-cpp.pt";
         Downloader::DownloadFromUrl(modelPath, url);
     }
-    global::model->Load(modelPath);
 
-    cout << "Model dowloaded." << endl;
+    cout << "Model downloaded." << endl;
+    
+    global::model->Load(modelPath);
 }
 
 /**

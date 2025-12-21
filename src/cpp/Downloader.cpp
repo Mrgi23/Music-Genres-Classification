@@ -1,13 +1,16 @@
 #include "Downloader.h"
 
 #include <algorithm>
+#include <archive.h>
+#include <archive_entry.h>
 #include <curl/curl.h>
-#include <zip.h>
+#include <stdexcept>
+#include <vector>
 
 using namespace std;
 
 Downloader::Downloader(const fs::path & rootPath, const string & url)
-    : m_rootPath(rootPath), m_url(url), m_zipFile(rootPath / "dataset.zip")
+    : m_rootPath(rootPath), m_url(url), m_archiveFile(rootPath / "dataset.tar.zst")
 {
 
 }
@@ -19,38 +22,45 @@ fs::path Downloader::GetRootPath() const
     return m_rootPath;
 }
 
-void Downloader::DownloadFromUrl(const fs::path & filePath, const string & url)
+bool Downloader::DownloadFromUrl(const fs::path & filePath, const string & url)
 {
     fs::create_directories(filePath.parent_path());
-    ofstream out(filePath, ios::binary);
+    FILE * out = std::fopen(filePath.string().c_str(), "wb");
 
     CURL * curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeToFile);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &out);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, nullptr);
+    curl_easy_setopt(curl, CURLOPT_BUFFERSIZE, 1024L * 1024L);
+    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
 
-    curl_easy_perform(curl);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 0L);
+    curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, nullptr);
+    CURLcode rc = curl_easy_perform(curl);
+
+    if (rc == CURLE_OK)
+    {
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, out);
+        rc = curl_easy_perform(curl);
+    }
+
     curl_easy_cleanup(curl);
-    out.close();
+    std::fclose(out);
+
+    return rc == CURLE_OK;
 }
 
 void Downloader::DownloadAndExtract()
 {
     if (!IsExisting())
     {
-        DownloadFromUrl(m_zipFile, m_url);
-
-        ExtractFile();
+        if (DownloadFromUrl(m_archiveFile, m_url))
+            ExtractFile();
+        else
+            throw invalid_argument("Downloader::DownloadAndExtract: URL: " + m_url + " is invalid.");
     }
-}
-
-size_t Downloader::writeToFile(void * ptr, size_t size, size_t nmemb, void * userdata)
-{
-    std::ofstream * out = static_cast<std::ofstream*>(userdata);
-
-    out->write(static_cast<char*>(ptr), size * nmemb);
-    return size * nmemb;
 }
 
 bool Downloader::IsExisting()
@@ -71,37 +81,35 @@ bool Downloader::IsExisting()
 
 void Downloader::ExtractFile()
 {
-    int err = 0;
-    zip * archive = zip_open(m_zipFile.c_str(), ZIP_RDONLY, &err);
+    archive * a = archive_read_new();
+    archive_read_support_filter_all(a); // zstd
+    archive_read_support_format_all(a); // tar
+    archive_read_open_filename(a, m_archiveFile.c_str(), 1024 * 1024);
 
-    zip_int64_t num_entries = zip_get_num_entries(archive, 0);
-    for (zip_uint64_t i = 0; i < num_entries; ++i)
+    archive_entry * entry = nullptr;
+
+    while (archive_read_next_header(a, &entry) == ARCHIVE_OK)
     {
-        const char * mem = zip_get_name(archive, i, 0);
-        std::string member(mem);
+        const char * mem = archive_entry_pathname(entry);
+        std::string member(mem ? mem : "");
 
-        if (member.starts_with("Data/genres_original/") && member.ends_with(".wav"))
+        fs::path savePath = m_rootPath / fs::path(member);
+        fs::create_directories(savePath.parent_path());
+
+        ofstream out(savePath, ios::binary);
+        vector<char> buffer(1 << 20);
+        la_ssize_t bytesRead;
+
+        while ((bytesRead = archive_read_data(a, buffer.data(), buffer.size())) > 0)
         {
-            fs::path relativePath = fs::path(member).lexically_relative("Data/genres_original/");
-            fs::path savePath = m_rootPath / fs::path(relativePath);
-            fs::create_directories(savePath.parent_path());
-
-            zip_file * file = zip_fopen_index(archive, i, 0);
-            ofstream out(savePath, ios::binary);
-            char buffer[8192];
-            zip_int64_t bytesRead;
-            while ((bytesRead = zip_fread(file, buffer, sizeof(buffer))) > 0)
-            {
-                out.write(buffer, bytesRead);
-            }
-
-            out.close();
-            zip_fclose(file);
+            out.write(buffer.data(), static_cast<std::streamsize>(bytesRead));
         }
-    }
-    zip_close(archive);
-    fs::remove(m_zipFile);
 
-    fs::path corruptedFile = m_rootPath / "jazz" / "jazz.00054.wav";
-    fs::remove(corruptedFile);
+        out.close();
+    }
+
+    archive_read_close(a);
+    archive_read_free(a);
+
+    fs::remove(m_archiveFile);
 }

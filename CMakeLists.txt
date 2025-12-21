@@ -47,7 +47,7 @@ target_include_directories(
   "${INCLUDE_DIR}"
   "${APP_DIR}"
   "${AUBIO_INCLUDE_DIRS}"
-  "${LIBZIP_INCLUDE_DIRS}"
+  "${LIBARCHIVE_INCLUDE_DIRS}"
   "${TORCH_INCLUDE_DIRS}"
 )
 
@@ -55,7 +55,7 @@ target_link_libraries(
   musicnet_exe PRIVATE
   "${AUBIO_LIBRARIES}"
   CURL::libcurl
-  "${LIBZIP_LIBRARIES}"
+  "${LIBARCHIVE_LIBRARIES}"
   nlohmann_json::nlohmann_json
   OpenMP::OpenMP_CXX
   pthread

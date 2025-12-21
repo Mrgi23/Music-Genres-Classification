@@ -21,7 +21,7 @@ class Downloader():
         root_path : Path
             Root path where the dataset will be stored.
         url : str, optional
-            URL from which the dataset should be downloaded, by default the GTZAN dataset Kaggle API endpoint.
+            URL from which the dataset should be downloaded, by default Cloudflare R2 sotrage API endpoint.
         """
         ...
 
