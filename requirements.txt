@@ -4,14 +4,14 @@ matplotlib
 numpy
 pandas
 pytest
+pycurl
 pytest-cov
 pytest-mock
 pytest-order
 pyyaml
-requests
 scikit-learn
 scipy
 soundfile
 tomli
 torch==2.8.0
-urllib3
+zstandard

@@ -1,0 +1,219 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [develop]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  BUILD_DIR: "tests/build"
+  DATASET_DIR: resources
+  REPORT_DIR: reports
+  COVERAGE_CPP_DIR: reports/htmlcov/cpp
+  COVERAGE_PY_DIR: reports/htmlcov/python
+
+jobs:
+  test_cpp:
+    name: Build & test C++ code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup C++ toolchain
+        uses: ./.github/actions/cpp-toolchain
+
+      - name: Install ORAS
+        uses: oras-project/setup-oras@v1
+
+      - name: Configure & build
+        run: |
+          set -euo pipefail
+          mkdir -p "${BUILD_DIR}"
+          cd "${BUILD_DIR}"
+          cmake -G Ninja ..
+          cmake --build . --parallel $(( $(nproc) / 2 ))
+
+      - name: Run tests
+        run: |
+          set -euo pipefail
+          mkdir -p "${COVERAGE_CPP_DIR}"
+          cd "${BUILD_DIR}"
+
+          ./unitTests --gtest_output=xml:results-cpp-unit.xml
+          ./integrationTests --gtest_output=xml:results-cpp-integration.xml
+          rm -rf ${{ env.DATASET_DIR }}
+
+          lcov --capture --directory . -o raw.info --ignore-errors inconsistent,inconsistent --ignore-errors mismatch,mismatch --rc geninfo_unexecuted_blocks=1 > /dev/null
+          lcov --extract raw.info "${GITHUB_WORKSPACE}/inc/*" "${GITHUB_WORKSPACE}/src/cpp/*" -o coverage-cpp.info --ignore-errors unused,unused > /dev/null
+          sed -i "/D0Ev/d" coverage-cpp.info
+
+          genhtml coverage-cpp.info -o ${GITHUB_WORKSPACE}/${COVERAGE_CPP_DIR}/
+
+      - name: Upload code coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ${{ env.BUILD_DIR }}/coverage-cpp.info
+          flags: cpp
+          report_type: coverage
+          disable_search: true
+          fail_ci_if_error: true
+
+      - name: Upload test results to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ${{ env.BUILD_DIR }}/results-cpp-unit.xml,${{ env.BUILD_DIR }}/results-cpp-integration.xml
+          flags: cpp
+          report_type: test_results
+
+      - name: Upload HTML coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpp
+          path: ${{ env.COVERAGE_CPP_DIR }}
+          retention-days: 1
+          if-no-files-found: error
+
+  test_py:
+    name: Test Python code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Setup Python toolchain
+        uses: ./.github/actions/py-toolchain
+        with:
+          requirements-file: requirements.txt
+
+      - name: Run tests
+        env:
+          PYTHONPATH: ./src/python
+        run: |
+          set -euo pipefail
+          mkdir -p "${COVERAGE_PY_DIR}"
+
+          export PYTEST_ADDOPTS="--cov-report=html:${COVERAGE_PY_DIR} --cov-report=xml:coverage-python.xml --junitxml=results-python.xml"
+          PYTHONPATH=./src/python pytest
+          rm -rf ${{ env.DATASET_DIR }}
+
+      - name: Upload code coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage-python.xml
+          flags: python
+          report_type: coverage
+          fail_ci_if_error: true
+
+      - name: Upload test results to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: results-python.xml
+          flags: python
+          report_type: test_results
+
+      - name: Upload HTML coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python
+          path: ${{ env.COVERAGE_PY_DIR }}
+          retention-days: 1
+          if-no-files-found: error
+
+  pages:
+    name: Publish reports to GitHub Pages
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test_cpp, test_py]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare Pages content
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf public
+          mkdir -p "public/htmlcov/cpp" "public/htmlcov/python"
+
+          cp -r "${GITHUB_WORKSPACE}/${REPORT_DIR}/." public || true
+
+          cp -r "artifacts/cpp/." "public/htmlcov/cpp/"
+          cp -r "artifacts/python/." "public/htmlcov/python/"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  tags:
+    name: Create release tag from commit message
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test_cpp, test_py]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create/replace tag if commit message contains Release vX.Y.Z
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          VERSION="$(echo "$COMMIT_MSG" | grep -Eiom1 'Release v[0-9]+\.[0-9]+\.[0-9]+' || true)"
+
+          if [[ -n "$VERSION" ]]; then
+            NEW_TAG=$(echo "$VERSION" | sed 's/Release //')
+            git tag -d "$NEW_TAG" 2>/dev/null || true
+            git push origin ":refs/tags/$NEW_TAG" 2>/dev/null || true
+            git tag -a "$NEW_TAG" -m "Release $NEW_TAG";
+            git push origin "$NEW_TAG";
+          fi
