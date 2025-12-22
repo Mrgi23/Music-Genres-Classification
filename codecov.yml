@@ -1,0 +1,35 @@
+comment:
+  layout: "diff, flags"
+  behavior: default
+
+codecov:
+  notify:
+    after_n_builds: 2
+
+coverage:
+  status:
+    patch:
+      cpp:
+        flags:
+          - cpp
+        target: 100%
+        threshold: 0%
+
+      python:
+        flags:
+          - python
+        target: 100%
+        threshold: 0%
+
+    project:
+      cpp:
+        flags:
+          - cpp
+        target: 100%
+        threshold: 0%
+
+      python:
+        flags:
+          - python
+        target: 100%
+        threshold: 0%

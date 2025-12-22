@@ -12,7 +12,6 @@
 ### Not Supported
 - **Native Windows (MSVC, MinGW)**
   - Aubio (`aubio`) requires manual setup on naitve Windows.
-  - `llvm-cov` does not work natively on Windows.
   - Google Test (`gtest`) requires manual setup on naitve Windows.
   - Profiling tools like `valgrind` are not available on Windows.
 - **macOS**

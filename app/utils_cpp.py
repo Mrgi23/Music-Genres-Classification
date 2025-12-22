@@ -86,7 +86,7 @@ def load_model(config: dict, model_path: Path) -> mgc.MusicModel:
         url = f"{config['BASE_URL']}/{config['PACKAGE']}/{config['VERSION']}/{config['PACKAGE']}-cpp.pt"
         mgc.Downloader.download_from_url(model_path, url)
 
-    print("Model dowloaded.")
+    print("Model downloaded.")
 
     model = mgc.MusicModel()
     model.load(model_path)

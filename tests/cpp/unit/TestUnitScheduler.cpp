@@ -54,7 +54,7 @@ INSTANTIATE_TEST_SUITE_P(
     }
 );
 
-TEST(TestScheduler, AttachOptimizer)
+TEST(TestScheduler, UpdateLRThrowError)
 {
     ReduceLROnPlateau scheduler("max", 0.5, 0); // ReduceLROnPlateau::UpdateLR: Optimizer is not attached.
     EXPECT_THROW(scheduler.UpdateLR(0.5), runtime_error);

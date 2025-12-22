@@ -94,7 +94,7 @@ def load_model(config: dict, model_path: Path) -> MusicModel:
         url = f"{config['BASE_URL']}/{config['PACKAGE']}/{config['VERSION']}/{config['PACKAGE']}-py.pt"
         Downloader.download_from_url(model_path, url)
 
-    print("Model dowloaded.")
+    print("Model downloaded.")
 
     model = MusicModel()
     model.load_state_dict(torch.load(model_path))

@@ -10,6 +10,7 @@ Both implementations expose the same functionality: audio preprocessing, dataset
 ## General Requirements
 - **Git** – version control
 - **CMake ≥ 4.1** – build configuration
+- **Oras** – required for pulling **GitHub** packages (`libtorch`)
 - **GCC == 12** – C++20 and `libtorch` compatible compiler
 - **Make** or **Ninja** – build system
 - **Python ≥ 3.12** – required for Python implementation
@@ -21,7 +22,9 @@ To build and run the project, ensure you have the required tools installed:
 
 ### Linux (Debian/Ubuntu)
 ```sh
-sudo apt update && sudo apt install -y build-essential cmake curl gcc-12 g++-12 git libaubio-dev libcurl4-openssl-dev liblapack-dev libomp-dev libopenblas-dev libzip-dev make ninja-build nlohmann-json3-dev pkg-config python3.12 python3.12-dev python3.12-venv
+sudo apt update && sudo apt install -y build-essential cmake curl gcc-12 g++-12 git libaubio-dev libarchive-dev libcurl4-openssl-dev liblapack-dev libomp-dev libopenblas-dev make ninja-build nlohmann-json3-dev pkg-config python3.12 python3.12-dev python3.12-venv
+
+sudo snap install oras --classic
 ```
 
 ### Windows
@@ -78,7 +81,6 @@ pip install -r requirements.txt
 ```
 
 ## Usage
-
 The project provides three different entry points, depending on which implementation you want to run:
 
 - **C++ executable** → `bin/musicnet`
@@ -98,6 +100,10 @@ All three support command-line arguments for controlling training, prediction, a
 ```sh
 # From root folder
 ./bin/musicnet --force --save
+```
+or
+```sh
+# From root folder
 cd ..
 ./music-genres-classification/bin/musicnet -wd ./music-genres-classification -p <path_to_wav_file>
 ```
@@ -111,7 +117,7 @@ PYTHONPATH=./bin python app/musicnet_cpp.py --force -p <path_to_wav_file>
 ### Python
 ```sh
 # From root folder
-PYTHONPATH=./src/python app/musicnet_py.py
+PYTHONPATH=./src/python python app/musicnet_py.py
 ```
 
 ## Troubleshooting
