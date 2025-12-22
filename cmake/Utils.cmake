@@ -26,8 +26,8 @@ find_package(OpenMP REQUIRED)
 # ----- Torch -----
 include("${CMAKE_CONFIG_DIR}/SetupTorch.cmake")
 
-# ----- Zip -----
-pkg_check_modules(LIBZIP REQUIRED libzip)
+# ----- Tar.Zstd -----
+pkg_check_modules(LIBARCHIVE REQUIRED libarchive)
 
 # ===== Sources =====
 file(GLOB CXX_SOURCES "${SOURCES_DIR}/*.cpp")

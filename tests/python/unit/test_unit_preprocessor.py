@@ -20,7 +20,7 @@ def test_preprocessor_process_file(preprocessor):
     # Test the result.
     assert(mfcc.numel() == num_frames_expected * mfcc_size_expected), "Invalid size of the MFCC."
 
-def test_preprocessor_process_file_exceltion(preprocessor):
+def test_preprocessor_process_file_exception(preprocessor):
     # Define the input.
     file_path = "./resources/jazz/jazz.00054.txt"
     with pytest.raises(FileNotFoundError, match=f"Preprocessor.__load_and_crop: File: {file_path} is invalid or corrupt."):

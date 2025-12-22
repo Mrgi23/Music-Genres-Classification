@@ -35,6 +35,7 @@ target_include_directories(
   "${INCLUDE_DIR}"
   "${gtest_SOURCE_DIR}/include"
   "${gmock_SOURCE_DIR}/include"
+  "${LIBARCHIVE_INCLUDE_DIRS}"
   "${TORCH_INCLUDE_DIRS}"
 )
 
@@ -45,10 +46,10 @@ target_link_libraries(
   gtest
   gtest_main
   gmock
+  "${LIBARCHIVE_LIBRARIES}"
   OpenMP::OpenMP_CXX
   pthread
   "${TORCH_LIBRARIES}"
-  zip
 )
 
 add_custom_target(
@@ -66,6 +67,7 @@ target_include_directories(
   "${INCLUDE_DIR}"
   "${gtest_SOURCE_DIR}/include"
   "${gmock_SOURCE_DIR}/include"
+  "${LIBARCHIVE_INCLUDE_DIRS}"
   "${TORCH_INCLUDE_DIRS}"
 )
 
@@ -76,10 +78,10 @@ target_link_libraries(
   gtest
   gtest_main
   gmock
+  "${LIBARCHIVE_LIBRARIES}"
   OpenMP::OpenMP_CXX
   pthread
   "${TORCH_LIBRARIES}"
-  zip
 )
 
 add_custom_target(
@@ -97,15 +99,13 @@ target_link_options(integrationTests PRIVATE --coverage)
 
 set(REPORT_DIR "${ROOT_DIR}/reports/htmlcov/cpp")
 file(MAKE_DIRECTORY "${REPORT_DIR}")
-set(REPORT_FILE "${REPORT_DIR}/coverage.info")
 
-# ----- Make Coverage -----
 add_custom_target(
   coverage
   COMMAND ./unitTests
   COMMAND ./integrationTests
-  COMMAND geninfo . -o raw.info --ignore-errors inconsistent,inconsistent --ignore-errors mismatch,mismatch --rc geninfo_unexecuted_blocks=1 > /dev/null
-  COMMAND lcov -e raw.info "${INCLUDE_DIR}/*" "${SOURCES_DIR}/*" -o "${REPORT_FILE}" --ignore-errors unused,unused > /dev/null
-  COMMAND sed -i "/D0Ev/d" "${REPORT_FILE}"
-  COMMAND genhtml "${REPORT_FILE}" -o "${REPORT_DIR}"
+  COMMAND lcov --capture --directory . -o raw.info --ignore-errors inconsistent,inconsistent --ignore-errors mismatch,mismatch --rc geninfo_unexecuted_blocks=1 > /dev/null
+  COMMAND lcov -e raw.info "${INCLUDE_DIR}/*" "${SOURCES_DIR}/*" -o coverage.info --ignore-errors unused,unused > /dev/null
+  COMMAND sed -i "/D0Ev/d" coverage.info
+  COMMAND genhtml coverage.info -o "${REPORT_DIR}"
 )

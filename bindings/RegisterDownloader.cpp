@@ -12,7 +12,7 @@ void RegisterDownloader(py::module_ & m)
     .def(
         py::init<const fs::path &, const std::string &>(),
         py::arg("root_path"),
-        py::arg("url") = "https://www.kaggle.com/api/v1/datasets/download/andradaolteanu/gtzan-dataset-music-genre-classification"
+        py::arg("url") = "https://artifacts.mrgi23.com/Music-Genres-Classification/dataset/dataset.tar.zst"
     )
     .def("download_and_extract", &Downloader::DownloadAndExtract)
     .def("get_root_path", &Downloader::GetRootPath)

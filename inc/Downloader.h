@@ -23,11 +23,11 @@ class Downloader
          * @brief Construct a new Downloader object.
          *
          * @param[in] rootPath Root path where the dataset will be stored.
-         * @param[in] url URL from which the dataset should be downloaded. Defaults to the GTZAN dataset Kaggle API endpoint.
+         * @param[in] url URL from which the dataset should be downloaded. Defaults to the Cloudflare R2 storage API endpoint.
          */
         Downloader(
             const fs::path & rootPath,
-            const std::string & url = "https://www.kaggle.com/api/v1/datasets/download/andradaolteanu/gtzan-dataset-music-genre-classification"
+            const std::string & url = "https://artifacts.mrgi23.com/Music-Genres-Classification/dataset/dataset.tar.zst"
         );
         /**
          * @brief Destructor.
@@ -41,8 +41,12 @@ class Downloader
          *
          * @param[in] filePath Destination path where the file will be saved.
          * @param[in] url The URL to download the file from.
+         * @return true If download was successfull.
+         * @return false If download has failed.
+         *
+         * @throws std::invalid_argument If the URL is invalid.
          */
-        static void DownloadFromUrl(const fs::path & filePath, const std::string & url);
+        static bool DownloadFromUrl(const fs::path & filePath, const std::string & url);
 
         /**
          * @brief Get the root path where the dataset will be extracted.
@@ -60,17 +64,6 @@ class Downloader
         void DownloadAndExtract();
     private:
         /**
-         * @brief libcurl write callback to stream data into a file.
-         *
-         * @param[in] ptr Pointer to the data buffer.
-         * @param[in] size Size of each data element.
-         * @param[in] nmemb Number of elements.
-         * @param[out] userdata File handle provided by the caller.
-         * @return size_t Number of bytes written.
-         */
-        static size_t writeToFile(void * ptr, size_t size, size_t nmemb, void * userdata);
-
-        /**
          * @brief Check whether the dataset already exists at the root path.
          *
          * @return true If the dataset already exists.
@@ -84,7 +77,7 @@ class Downloader
 
         fs::path m_rootPath;
         std::string m_url;
-        fs::path m_zipFile;
+        fs::path m_archiveFile;
 };
 
 #endif

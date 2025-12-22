@@ -1,4 +1,12 @@
 
+<a name="v1.0.1"></a>
+## [v1.0.1](https://gitlab.com/Mrgi23/programmable-signal-generator/compare/v1.0.0...v1.0.1) (2025-12-21)
+
+### Maintenance
+
+* Migrated from GitLab to GitHub
+
+
 <a name="v1.0.0"></a>
 ## v1.0.0 (2025-10-15)
 
