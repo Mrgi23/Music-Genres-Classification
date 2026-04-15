@@ -12,10 +12,8 @@ set(INCLUDE_DIR "${ROOT_DIR}/inc" CACHE PATH "C++ Headers")
 set(SOURCES_DIR "${ROOT_DIR}/src/cpp" CACHE PATH "C++ Sources")
 
 # ===== Dependencies =====
-find_package(PkgConfig REQUIRED)
-
 # ----- Aubio -----
-pkg_check_modules(AUBIO REQUIRED aubio)
+find_package(Aubio REQUIRED)
 
 # ----- Curl -----
 find_package(CURL REQUIRED)
@@ -23,11 +21,11 @@ find_package(CURL REQUIRED)
 # ----- OpenMP -----
 find_package(OpenMP REQUIRED)
 
-# ----- Torch -----
-include("${CMAKE_CONFIG_DIR}/SetupTorch.cmake")
+# ----- LibTorch -----
+find_package(LibTorch REQUIRED)
 
 # ----- Tar.Zstd -----
-pkg_check_modules(LIBARCHIVE REQUIRED libarchive)
+find_package(LibArchive REQUIRED)
 
 # ===== Sources =====
 file(GLOB CXX_SOURCES "${SOURCES_DIR}/*.cpp")

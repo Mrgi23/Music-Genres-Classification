@@ -14,7 +14,7 @@ class TestDataset : public ::testing::Test
         void SetUp() override
         {
             // Create dataset.
-            fs::path datasetPath = "../../resources";
+            fs::path datasetPath = "../../../resources";
             preprocessor = new Preprocessor();
             audioDataset = new AudioDataset(datasetPath, preprocessor);
         }

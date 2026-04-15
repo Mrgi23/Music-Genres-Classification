@@ -40,8 +40,8 @@ venv.bak/
 # Visual Studio Code
 .vscode/
 
-# External files
-external/
+# CMake files
+*CMakeUserPresets.json
 
 # Audio files
 *.wav

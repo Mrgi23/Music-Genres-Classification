@@ -1,0 +1,17 @@
+[requires]
+aubio/0.4.9@mrgi/release
+gtest/1.17.0
+libarchive/3.8.1
+libcurl/8.19.0
+libtorch/2.8.0-cu128@mrgi/release
+
+[generators]
+CMakeDeps
+CMakeToolchain
+
+[layout]
+cmake_layout
+
+[options]
+curl/*:with_openssl=True
+curl/*:with_ssl=openssl

@@ -14,7 +14,7 @@ class TestPreprocessor : public ::testing::Test
 TEST_F(TestPreprocessor, ProcessFile)
 {
     // Define the input and expected result.
-    fs::path filePath = "../../resources/jazz/jazz.00001.wav";
+    fs::path filePath = "../../../resources/jazz/jazz.00001.wav";
     uint numFramesExpected = 1 + preprocessor.GetCfg().size / preprocessor.GetCfg().hop;
     uint mfccSizeExpected = preprocessor.GetCfg().nmfcc;
 
@@ -27,7 +27,7 @@ TEST_F(TestPreprocessor, ProcessFile)
 
 TEST_F(TestPreprocessor, ProcessFileThrowError)
 {
-    fs::path filePath = "../../resources/jazz/jazz.00054.txt"; // Preprocessor::LoadAndCrop: Invalid or corrupted file.
+    fs::path filePath = "../../../resources/jazz/jazz.00054.txt"; // Preprocessor::LoadAndCrop: Invalid or corrupted file.
     EXPECT_THROW(preprocessor.ProcessFile(filePath), runtime_error);
 }
 
