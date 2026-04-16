@@ -9,9 +9,9 @@ Both implementations expose the same functionality: audio preprocessing, dataset
 
 ## General Requirements
 - **Git** – version control
+- **Conan ≥ 2.1** – required for pulling pulling dependencies
 - **CMake ≥ 4.1** – build configuration
-- **Oras** – required for pulling **GitHub** packages (`libtorch`)
-- **GCC == 12** – C++20 and `libtorch` compatible compiler
+- **GCC ≥ 12** – C++20 and `libtorch` compatible compiler
 - **Make** or **Ninja** – build system
 - **Python ≥ 3.12** – required for Python implementation
 - **CUDA == 12.8** – **NVIDIA** GPU acceleration runtime (**CUDA Runtime + cuBLAS/cuDNN**). For setup instructions, see [Cuda Installation](CUDA.md).
@@ -22,9 +22,12 @@ To build and run the project, ensure you have the required tools installed:
 
 ### Linux (Debian/Ubuntu)
 ```sh
-sudo apt update && sudo apt install -y build-essential cmake curl gcc-12 g++-12 git libaubio-dev libarchive-dev libcurl4-openssl-dev liblapack-dev libomp-dev libopenblas-dev make ninja-build nlohmann-json3-dev pkg-config python3.12 python3.12-dev python3.12-venv
+sudo apt update && sudo apt install -y build-essential cmake gcc g++ git liblapack-dev libomp-dev libopenblas-dev make ninja-build pipx python3.12 python3.12-dev python3.12-venv
+sudo pipx ensure path
 
-sudo snap install oras --classic
+sudo pipx install conan
+conan remote add conancenter https://center2.conan.io
+conan remote add artifactory https://conan.mrgi23.com/artifactory/api/conan/Conan-Index
 ```
 
 ### Windows
@@ -36,16 +39,16 @@ sudo snap install oras --classic
 ### **Clone the Repository**
 Clone the project using SSH:
 ```sh
-git clone git@gitlab.com:mrgi23/music-genres-classification.git
-cd music-genres-classification
+git clone git@github.com:Mrgi23/Music-Genres-Classification.git
+cd Music-Genres-Classification
 ```
 
 ### C++
-Create a `build` directory, generate build files with **CMake**, and compile:
+Pull the dependencies using Conan, generate Makefiles with CMake, and compile:
 ```sh
-mkdir -p build && cd build
-cmake -G Ninja ..
-ninja -j$(nproc)
+conan install . --build=missing
+cmake -G Ninja --preset conan-release
+cmake --build --preset conan-release
 ```
 
 #### Python Bindings (Optional)
@@ -53,9 +56,9 @@ ninja -j$(nproc)
 The C++ code can also be wrapped into Python bindings to produce a `.so` extension module.
 This is disabled by default. To enable it, pass the `-DBUILD_PYTHON=ON` flag:
 ```sh
-mkdir -p build && cd build
-cmake -G Ninja .. -DBUILD_PYTHON=ON
-ninja -j$(nproc)
+monan install . --build=missing
+cmake -G Ninja -DBUILD_PYTHON=ON --preset conan-release
+cmake --build --preset conan-release
 ```
 
 This produces the binaries in the `bin` folder:
@@ -93,7 +96,7 @@ All three support command-line arguments for controlling training, prediction, a
 |    `-h`     |          `--help`          | Prints usage help and exits. |
 |    `-wd`    | `--working-dir` (C++ Only) | Absolute or relative path to the root folder of the project. Must be provided if running program outside of root folder. |
 |    `-p`     |        `--predict`         | Path to a `.wav` file to classify into one of the available genres. If not provided, the entire test dataset will be evaluated. |
-|    `-f`     |         `--force`          | Forces training of the model. Without this flag, a pretrained model is downloaded automatically from the GitLab package registry. |
+|    `-f`     |         `--force`          | Forces training of the model. Without this flag, a pretrained model is downloaded automatically from the S3 storage. |
 |    `-s`     |          `--save`          | Save the model after training (only works if training is performed with `--force`). |
 
 ### C++ Executable
@@ -125,7 +128,7 @@ PYTHONPATH=./src/python python app/musicnet_py.py
 |        **Issue**        |    **Possible Fix**   |
 |-------------------------|-----------------------|
 | `cmake` not found       | Install using `sudo apt install cmake` |
-| Compiler errors         | Ensure `g++` version is 12 (`g++ --version`). |
+| Compiler errors         | Ensure `g++` version is ≥ 12 (`g++ --version`). |
 | Python version mismatch | Run `python3.12` explicitly if needed. |
 |  Cuda version mismatch  | Ensure `cuda` version is 12.8 |
 
