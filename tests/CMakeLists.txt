@@ -1,9 +1,9 @@
-# ===== Setup =====
-cmake_minimum_required(VERSION 3.10)
+# ===== Project Setup =====
+cmake_minimum_required(VERSION 3.28)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# ===== Projecct =====
+# ===== Project =====
 project(Tests)
 
 # ===== Root Directory =====
@@ -13,15 +13,9 @@ set(CMAKE_CONFIG_DIR "${ROOT_DIR}/cmake" CACHE PATH "CMake Configurations")
 # ===== Setup =====
 include("${CMAKE_CONFIG_DIR}/Utils.cmake")
 
-# ===== Dependencies =====
+# ===== Additional Dependencies =====
 # ----- Google Test & Google Mock -----
-include(FetchContent)
-FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.16.0
-)
-FetchContent_MakeAvailable(googletest)
+find_package(GTest REQUIRED)
 
 # ===== Targets =====
 set(TESTS_DIR "${ROOT_DIR}/tests/cpp")
@@ -30,26 +24,19 @@ set(TESTS_DIR "${ROOT_DIR}/tests/cpp")
 file(GLOB UNIT_TEST_SOURCES "${TESTS_DIR}/unit/*.cpp")
 add_executable(unitTests "${CXX_SOURCES}" "${UNIT_TEST_SOURCES}")
 
-target_include_directories(
-  unitTests PRIVATE
-  "${INCLUDE_DIR}"
-  "${gtest_SOURCE_DIR}/include"
-  "${gmock_SOURCE_DIR}/include"
-  "${LIBARCHIVE_INCLUDE_DIRS}"
-  "${TORCH_INCLUDE_DIRS}"
-)
+target_include_directories(unitTests PRIVATE "${INCLUDE_DIR}")
 
 target_link_libraries(
   unitTests PRIVATE
-  aubio
-  curl
-  gtest
-  gtest_main
-  gmock
-  "${LIBARCHIVE_LIBRARIES}"
+  Aubio::Aubio
+  CURL::libcurl
+  GTest::gtest
+  GTest::gtest_main
+  GTest::gmock
+  LibArchive::LibArchive
+  LibTorch::LibTorch
   OpenMP::OpenMP_CXX
   pthread
-  "${TORCH_LIBRARIES}"
 )
 
 add_custom_target(
@@ -62,26 +49,19 @@ add_custom_target(
 file(GLOB INTEGRATION_TEST_SOURCES "${TESTS_DIR}/integration/*.cpp")
 add_executable(integrationTests "${CXX_SOURCES}" "${INTEGRATION_TEST_SOURCES}")
 
-target_include_directories(
-  integrationTests PRIVATE
-  "${INCLUDE_DIR}"
-  "${gtest_SOURCE_DIR}/include"
-  "${gmock_SOURCE_DIR}/include"
-  "${LIBARCHIVE_INCLUDE_DIRS}"
-  "${TORCH_INCLUDE_DIRS}"
-)
+target_include_directories(integrationTests PRIVATE "${INCLUDE_DIR}")
 
 target_link_libraries(
   integrationTests PRIVATE
-  aubio
-  curl
-  gtest
-  gtest_main
-  gmock
-  "${LIBARCHIVE_LIBRARIES}"
+  Aubio::Aubio
+  CURL::libcurl
+  GTest::gtest
+  GTest::gtest_main
+  GTest::gmock
+  LibArchive::LibArchive
+  LibTorch::LibTorch
   OpenMP::OpenMP_CXX
   pthread
-  "${TORCH_LIBRARIES}"
 )
 
 add_custom_target(

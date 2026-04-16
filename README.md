@@ -20,7 +20,7 @@ The **Music Genres Classification** is a deep learning project that leverages co
 
 ## Authors and Acknowledgments
 ### Author
-- [**Aleksa Markovic**](https://gitlab.com/mrgi23) – Creator & Maintainer
+- [**Aleksa Markovic**](https://github.com/Mrgi23) – Creator & Maintainer
 
 ### Acknowledgments
 Special thanks to

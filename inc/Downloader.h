@@ -27,7 +27,7 @@ class Downloader
          */
         Downloader(
             const fs::path & rootPath,
-            const std::string & url = "https://artifacts.mrgi23.com/Music-Genres-Classification/dataset/dataset.tar.zst"
+            const std::string & url = "https://s3.mrgi23.com/artifacts/Music-Genres-Classification/dataset/dataset.tar.zst"
         );
         /**
          * @brief Destructor.

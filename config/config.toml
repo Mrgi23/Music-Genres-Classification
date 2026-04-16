@@ -12,7 +12,7 @@ NUM_MELS      = 128
 NUM_MFCC      = 13
 
 [MODEL]
-BASE_URL      = "https://artifacts.mrgi23.com/Music-Genres-Classification"
+BASE_URL      = "https://s3.mrgi23.com/artifacts/Music-Genres-Classification"
 PACKAGE       = "model"
 VERSION       = "1.0.0"
 
