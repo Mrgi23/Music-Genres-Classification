@@ -17,7 +17,7 @@ class Downloader():
     def __init__(
         self,
         root_path: Path,
-        url: str = "https://artifacts.mrgi23.com/Music-Genres-Classification/dataset/dataset.tar.zst"
+        url: str = "https://s3.mrgi23.com/artifacts/Music-Genres-Classification/dataset/dataset.tar.zst"
     ) -> None:
         """
         Construct a new Downloader object.
@@ -51,6 +51,7 @@ class Downloader():
         curl.setopt(pycurl.BUFFERSIZE, 1024 * 1024)
         curl.setopt(pycurl.FAILONERROR, 1)
         curl.setopt(pycurl.FOLLOWLOCATION, 1)
+        curl.setopt(pycurl.USERAGENT, "curl/8.0")
 
         try:
             with open(file_path, "wb") as out:

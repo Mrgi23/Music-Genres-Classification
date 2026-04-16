@@ -1,6 +1,26 @@
 
-<a name="v1.0.1"></a>
-## [v1.0.1](https://gitlab.com/Mrgi23/programmable-signal-generator/compare/v1.0.0...v1.0.1) (2025-12-21)
+<a name="v1.2.0"></a>
+## [v1.2.0](https://github.com/Mrgi23/Music-Genres-Classification/compare/v1.1.0...v1.2.0) (2026-04-16)
+
+### Performance Improvements
+
+* Added Conan support for all dependencies
+
+### CI/CD Pipelines
+
+* Updated CICD pipeline to use Conan for dependency management
+
+### Documentation
+
+* Updated documentation
+
+### Maintenance
+
+* Added changes log for release v1.2.0
+
+
+<a name="v1.1.0"></a>
+## [v1.1.0](https://github.com/Mrgi23/Music-Genres-Classification/compare/v1.0.0...v1.1.0) (2025-12-22)
 
 ### Maintenance
 

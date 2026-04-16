@@ -22,9 +22,9 @@ Ensure that all required dependencies are installed.
 #### Application Dependencies
 - `cuda` - **NVIDIA** GPU acceleration runtime (**CUDA Runtime + cuBLAS/cuDNN**). For setup instructions, see [Cuda Installation](CUDA.md).
 - `aubio` – Used for audio analysis and feature extraction.
-- `oras` - Required for **GitHub** packages (`libtorch`)
 
 #### Testing Dependencies
+- **Conan** - System for compiling dependencies
 - **CMake(`cmake`)** – Build system for compiling tests
 - **GCOV (`gcov`)** – Required for C++ code coverage (**only works with `gcc` \ `g++`**)
 
@@ -38,9 +38,12 @@ The Python dependencies required for both application and testing are listed in 
 ### Installation
 #### 1. Linux/WSL
 ```sh
-sudo apt update && sudo apt install -y build-essential cmake gcc-12 g++-12 git lcov libaubio-dev libarchive-dev libcurl4-openssl-dev liblapack-dev libomp-dev libopenblas-dev ninja-build pkg-config python3.12 python3.12-dev python3.12-venv
+sudo apt update && sudo apt install -y build-essential cmake gcc g++ git lcov liblapack-dev libomp-dev libopenblas-dev ninja-build pipx python3.12 python3.12-dev python3.12-venv
+sudo pipx ensure path
 
-sudo snap install oras --classic
+sudo pipx install conan
+conan remote add conancenter https://center2.conan.io
+conan remote add artifactory https://conan.mrgi23.com/artifactory/api/conan/Conan-Index
 
 python -m venv .venv
 source .venv/bin/activate
@@ -78,9 +81,11 @@ Integration tests verify that the various components of the Music Genres Classif
 ##  Running Tests
 ### C++ Tests
 ```sh
-mkdir -p tests/build && cd tests/build
-cmake -G Ninja ..
-ninja -j$(nproc)
+cd tests
+conan install . --build=missing
+cmake -G Ninja --preset conan-release
+cmake --build --preset conan-release
+cd build/Release
 ninja unit # Unit Tests
 ninja integration # Integration Tests
 ```
@@ -112,9 +117,11 @@ C++ code coverage is generated using **GCC's (`gcov`)**, which only works with *
 - Linux: **Native support with GCC\G++**
 - Windows: **Must use WSL with GCC\G++**
 ```sh
-mkdir -p tests/build && cd tests/build
-cmake -G Ninja ..
-ninja -j$(nproc)
+cd tests
+conan install . --build=missing
+cmake -G Ninja --preset conan-release
+cmake --build --preset conan-release
+cd build/Release
 ninja coverage
 ```
 #### Python Code Coverage

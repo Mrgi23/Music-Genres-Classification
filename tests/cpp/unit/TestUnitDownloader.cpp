@@ -7,8 +7,8 @@ using namespace std;
 TEST(TestDownloader, DownloadAndExtract)
 {
     // Define the test object.
-    fs::remove_all("../../resources");
-    Downloader downloader("../../resources");
+    fs::remove_all("../../../resources");
+    Downloader downloader("../../../resources");
 
     // Define the expected result.
     uint nFoldersExpected = 10U;
@@ -38,6 +38,6 @@ TEST(TestDownloader, DownloadAndExtract)
 
 TEST(TestDownloader, DownloadAndExtractThrowError)
 {
-    Downloader downloader("./", "https://artifacts.mrgi23.com/Music-Genres-Classification/dataset/invalid.tar.zst"); // Downloader::DownloadAndExtract: Invalid URL."
+    Downloader downloader("./", "https://s3.mrgi23.com/artifacts/Music-Genres-Classification/dataset/invalid.tar.zst"); // Downloader::DownloadAndExtract: Invalid URL."
     EXPECT_THROW(downloader.DownloadAndExtract(), invalid_argument);
 }

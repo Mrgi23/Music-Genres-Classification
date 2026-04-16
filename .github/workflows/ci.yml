@@ -11,7 +11,8 @@ permissions:
   contents: read
 
 env:
-  BUILD_DIR: "tests/build"
+  TEST_DIR: "tests"
+  BUILD_DIR: "tests/build/Release"
   DATASET_DIR: resources
   REPORT_DIR: reports
   COVERAGE_CPP_DIR: reports/htmlcov/cpp
@@ -29,16 +30,13 @@ jobs:
       - name: Setup C++ toolchain
         uses: ./.github/actions/cpp-toolchain
 
-      - name: Install ORAS
-        uses: oras-project/setup-oras@v1
-
       - name: Configure & build
         run: |
           set -euo pipefail
-          mkdir -p "${BUILD_DIR}"
-          cd "${BUILD_DIR}"
-          cmake -G Ninja ..
-          cmake --build . --parallel $(( $(nproc) / 2 ))
+          cd "${TEST_DIR}"
+          conan install . --build=missing
+          cmake -G Ninja --preset conan-release
+          cmake --build --parallel $(( $(nproc) / 2 )) --preset conan-release
 
       - name: Run tests
         run: |

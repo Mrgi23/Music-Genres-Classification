@@ -1,4 +1,7 @@
-cmake_minimum_required(VERSION 3.10)
+# ===== Project Setup =====
+cmake_minimum_required(VERSION 3.28)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ===== Project =====
 project(MusicGenresClassification)
@@ -28,13 +31,7 @@ endif()
 find_package(nlohmann_json REQUIRED)
 
 # ----- toml++ -----
-include(FetchContent)
-FetchContent_Declare(
-  tomlplusplus
-  GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
-  GIT_TAG v3.4.0
-)
-FetchContent_MakeAvailable(tomlplusplus)
+find_package(tomlplusplus REQUIRED)
 
 # ===== Add Additional Sources =====
 list(APPEND CXX_SOURCES "${APP_DIR}/main.cpp")
@@ -42,25 +39,18 @@ list(APPEND CXX_SOURCES "${APP_DIR}/main.cpp")
 # ===== Executable =====
 add_executable(musicnet_exe "${CXX_SOURCES}")
 
-target_include_directories(
-  musicnet_exe PRIVATE
-  "${INCLUDE_DIR}"
-  "${APP_DIR}"
-  "${AUBIO_INCLUDE_DIRS}"
-  "${LIBARCHIVE_INCLUDE_DIRS}"
-  "${TORCH_INCLUDE_DIRS}"
-)
+target_include_directories(musicnet_exe PRIVATE "${INCLUDE_DIR}" "${APP_DIR}")
 
 target_link_libraries(
   musicnet_exe PRIVATE
-  "${AUBIO_LIBRARIES}"
+  Aubio::Aubio
   CURL::libcurl
-  "${LIBARCHIVE_LIBRARIES}"
+  LibArchive::LibArchive
+  LibTorch::LibTorch
   nlohmann_json::nlohmann_json
   OpenMP::OpenMP_CXX
   pthread
   tomlplusplus::tomlplusplus
-  "${TORCH_LIBRARIES}"
 )
 
 set_target_properties(

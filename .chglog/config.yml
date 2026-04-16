@@ -2,7 +2,7 @@ style: gitlab
 template: CHANGELOG.tpl.md
 info:
   title: CHANGELOG
-  repository_url: https://gitlab.com/Mrgi23/programmable-signal-generator
+  repository_url: https://github.com/Mrgi23/Music-Genres-Classification
 options:
   commits:
     filters:
