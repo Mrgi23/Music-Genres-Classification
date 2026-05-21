@@ -11,10 +11,10 @@ Both implementations expose the same functionality: audio preprocessing, dataset
 - **Git** – version control
 - **Conan ≥ 2.1** – required for pulling pulling dependencies
 - **CMake ≥ 4.1** – build configuration
-- **GCC ≥ 12** – C++20 and `libtorch` compatible compiler
+- **GCC ≥ 13** – C++20 and `libtorch` compatible compiler
 - **Make** or **Ninja** – build system
 - **Python ≥ 3.12** – required for Python implementation
-- **CUDA == 12.8** – **NVIDIA** GPU acceleration runtime (**CUDA Runtime + cuBLAS/cuDNN**). For setup instructions, see [Cuda Installation](CUDA.md).
+- **CUDA == 13.2** – **NVIDIA** GPU acceleration runtime (**CUDA Runtime + cuBLAS/cuDNN**). For setup instructions, see [Cuda Installation](CUDA.md).
 
 ## Install Dependencies
 
@@ -64,7 +64,7 @@ cmake --build --preset conan-release
 This produces the binaries in the `bin` folder:
 
 - C++ Executable: `bin/musicnet`
-- Python Module: `bin/musicnet.cpython-<version>-x86_64-linux-gnu.so` (importable in Python with **torch** `2.8.0(+cu128)`)
+- Python Module: `bin/musicnet.cpython-<version>-x86_64-linux-gnu.so` (importable in Python with **torch** `2.12.0(+cu132)`)
 
 ### Python
 Create and activate a virtual environment (optional), and install dependencies:
@@ -130,7 +130,7 @@ PYTHONPATH=./src/python python app/musicnet_py.py
 | `cmake` not found       | Install using `sudo apt install cmake` |
 | Compiler errors         | Ensure `g++` version is ≥ 12 (`g++ --version`). |
 | Python version mismatch | Run `python3.12` explicitly if needed. |
-|  Cuda version mismatch  | Ensure `cuda` version is 12.8 |
+|  Cuda version mismatch  | Ensure `cuda` version is 13.2 |
 
 
 ## Next Steps

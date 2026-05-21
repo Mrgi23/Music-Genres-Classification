@@ -22,7 +22,7 @@ find_package(CURL REQUIRED)
 find_package(OpenMP REQUIRED)
 
 # ----- LibTorch -----
-find_package(LibTorch REQUIRED)
+find_package(Torch REQUIRED)
 
 # ----- Tar.Zstd -----
 find_package(LibArchive REQUIRED)

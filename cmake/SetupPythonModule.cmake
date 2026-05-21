@@ -5,7 +5,8 @@ set(BINDINGS_DIR "${ROOT_DIR}/bindings" CACHE PATH "Pybind11 binding sources")
 
 # ===== Additional Dependencies =====
 # ----- PyBind11 -----
-find_package(pybind11 REQUIRED)
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
+find_package(pybind11 REQUIRED CONFIG)
 
 # ===== Register Bindings =====
 include("${CMAKE_CONFIG_DIR}/RegisterDownloader.cmake")
@@ -27,11 +28,11 @@ target_link_libraries(
     Downloader::core
     Preprocessor::core
     Dataset::core
-    LibTorch::LibTorch
     Model::core
     Scheduler::core
     Optimizer::core
     Trainer::core
+    "${TORCH_LIBRARIES}"
 )
 
 set_target_properties(

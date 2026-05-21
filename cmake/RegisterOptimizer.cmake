@@ -7,6 +7,6 @@ add_library(optimizer_core INTERFACE)
 target_include_directories(optimizer_core INTERFACE "${INCLUDE_DIR}")
 
 # Torch is header+lib, so we still propagate link
-target_link_libraries(optimizer_core INTERFACE LibTorch::LibTorch)
+target_link_libraries(optimizer_core INTERFACE "${TORCH_LIBRARIES}")
 
 add_library(Optimizer::core ALIAS optimizer_core)
