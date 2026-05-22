@@ -1,140 +1,139 @@
 from model import MusicModel
-
 import torch
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 class DeviceManager():
+  """
+  Device
+
+  Provides a globally accessible device type.
+
+  The Device class encapsulates device selection logic for the project.
+  It automatically checks if CUDA is available and selects a GPU device;
+  otherwise, it falls back to CPU.
+  """
+  @staticmethod
+  def get() -> str:
     """
-    Device
+    Get the device.
 
-    Provides a globally accessible device type.
+    Determines the appropriate device ("cuda" if available, otherwise "cpu").
 
-    The Device class encapsulates device selection logic for the project.
-    It automatically checks if CUDA is available and selects a GPU device;
-    otherwise, it falls back to CPU.
+    Returns
+    -------
+    str
+      Device type.
     """
-    @staticmethod
-    def get() -> str:
-        """
-        Get the device.
-
-        Determines the appropriate device ("cuda" if available, otherwise "cpu").
-
-        Returns
-        -------
-        str
-            Device type.
-        """
-        return "cuda" if torch.cuda.is_available() else "cpu"
+    return "cuda" if torch.cuda.is_available() else "cpu"
 
 class Trainer():
+  """
+  Trainer
+
+  Handles training and evaluation of the music classification model.
+
+  The Trainer class manages the optimization process, including
+  forward/backward passes, loss calculation and parameter updates.
+  """
+  def __init__(self, model: MusicModel, opt: Optimizer) -> None:
     """
-    Trainer
+    Construct a new Trainer object.
 
-    Handles training and evaluation of the music classification model.
+    Initializes the model, optimizer, and loss function.
+    Automatically selects CUDA if available, otherwise uses CPU.
 
-    The Trainer class manages the optimization process, including
-    forward/backward passes, loss calculation and parameter updates.
+    Parameters
+    ----------
+    model : MusicModel
+      Reference to the music model to be trained.
+    opt : torch.optim.Optimizer
+      Reference to the optimizer used in training.
     """
-    def __init__(self, model: MusicModel, opt: Optimizer) -> None:
-        """
-        Construct a new Trainer object.
+    self.__model = model
+    self.__opt = opt
+    self.__loss_function = torch.nn.CrossEntropyLoss()
 
-        Initializes the model, optimizer, and loss function.
-        Automatically selects CUDA if available, otherwise uses CPU.
+    self.__model.to(DeviceManager.get())
 
-        Parameters
-        ----------
-        model : MusicModel
-            Reference to the music model to be trained.
-        opt : torch.optim.Optimizer
-            Reference to the optimizer used in training.
-        """
-        self.__model = model
-        self.__opt = opt
-        self.__loss_function = torch.nn.CrossEntropyLoss()
+  def train(self, dataloader: DataLoader) -> tuple[float, float]:
+    """
+    Train the model for one epoch.
 
-        self.__model.to(DeviceManager.get())
+    Iterates over batches from the provided dataloader, performs forward
+    and backward passes, updates model parameters, and computes average
+    loss and accuracy across all samples.
 
-    def train_model(self, dataloader: DataLoader) -> tuple[float, float]:
-        """
-        Train the model for one epoch.
+    Parameters
+    ----------
+    dataloader : torch.utils.data.DataLoader
+      Data loader providing training batches.
 
-        Iterates over batches from the provided dataloader, performs forward
-        and backward passes, updates model parameters, and computes average
-        loss and accuracy across all samples.
+    Returns
+    -------
+    tuple[float, float]
+      Tuple of average loss over all batches and
+      average accuracy over all samples.
+    """
+    self.__model.train()
 
-        Parameters
-        ----------
-        dataloader : torch.utils.data.DataLoader
-            Data loader providing training batches.
+    total_loss = 0.0
+    correct_pred = 0
+    total_samples = 0
+    for data, target in dataloader:
+      data = data.to(DeviceManager.get(), non_blocking=True)
+      target = target.to(DeviceManager.get(), non_blocking=True)
 
-        Returns
-        -------
-        tuple[float, float]
-            Tuple of average loss over all batches and
-            average accuracy over all samples.
-        """
-        self.__model.train()
+      self.__opt.zero_grad()
 
-        total_loss = 0.0
-        correct_pred = 0
-        total_samples = 0
-        for data, target in dataloader:
-            data = data.to(DeviceManager.get(), non_blocking=True)
-            target = target.to(DeviceManager.get(), non_blocking=True)
+      output = self.__model(data)
+      loss = self.__loss_function(output, target)
+      total_loss += loss.item()
 
-            self.__opt.zero_grad()
+      preds = output.argmax(dim=1)
+      correct_pred += (preds == target).sum().item()
+      total_samples += target.size(0)
 
-            output = self.__model(data)
-            loss = self.__loss_function(output, target)
-            total_loss += loss.item()
+      loss.backward()
 
-            preds = output.argmax(dim=1)
-            correct_pred += (preds == target).sum().item()
-            total_samples += target.size(0)
+      self.__opt.step()
 
-            loss.backward()
+    return total_loss / len(dataloader), correct_pred / total_samples
 
-            self.__opt.step()
+  def eval(self, dataloader: DataLoader) -> tuple[float, float]:
+    """
+    Evaluate the model without gradient updates.
 
-        return total_loss / len(dataloader), correct_pred / total_samples
+    Iterates over batches from the provided dataloader in evaluation mode,
+    computes loss and accuracy, but does not update model parameters.
 
-    def eval_model(self, dataloader: DataLoader) -> tuple[float, float]:
-        """
-        Evaluate the model without gradient updates.
+    Parameters
+    ----------
+    dataloader : torch.utils.data.DataLoader
+      Data loader providing evaluation batches.
 
-        Iterates over batches from the provided dataloader in evaluation mode,
-        computes loss and accuracy, but does not update model parameters.
+    Returns
+    -------
+    tuple[float, float]
+      Tuple of average loss over all batches and
+      average accuracy over all samples.
+    """
+    self.__model.eval()
 
-        Parameters
-        ----------
-        dataloader : torch.utils.data.DataLoader
-            Data loader providing evaluation batches.
+    total_loss = 0.0
+    correct_pred = 0
+    total_samples = 0
+    with torch.no_grad():
+      for data, target in dataloader:
+        data = data.to(DeviceManager.get(), non_blocking=True)
+        target = target.to(DeviceManager.get(), non_blocking=True)
 
-        Returns
-        -------
-        tuple[float, float]
-            Tuple of average loss over all batches and
-            average accuracy over all samples.
-        """
-        self.__model.eval()
+        output = self.__model(data)
+        loss = self.__loss_function(output, target)
+        total_loss += loss.item()
 
-        total_loss = 0.0
-        correct_pred = 0
-        total_samples = 0
-        with torch.no_grad():
-            for data, target in dataloader:
-                data = data.to(DeviceManager.get(), non_blocking=True)
-                target = target.to(DeviceManager.get(), non_blocking=True)
+        preds = output.argmax(dim=1)
+        correct_pred += (preds == target).sum().item()
+        total_samples += target.size(0)
 
-                output = self.__model(data)
-                loss = self.__loss_function(output, target)
-                total_loss += loss.item()
-
-                preds = output.argmax(dim=1)
-                correct_pred += (preds == target).sum().item()
-                total_samples += target.size(0)
-
-        return total_loss / len(dataloader), correct_pred / total_samples
+    return total_loss / len(dataloader), correct_pred / total_samples

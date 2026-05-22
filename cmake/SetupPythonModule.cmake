@@ -5,7 +5,16 @@ set(BINDINGS_DIR "${ROOT_DIR}/bindings" CACHE PATH "Pybind11 binding sources")
 
 # ===== Additional Dependencies =====
 # ----- PyBind11 -----
-find_package(pybind11 REQUIRED)
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
+find_package(pybind11 REQUIRED CONFIG)
+
+# ----- Torch Python -----
+find_library(
+  TORCH_PYTHON_LIBRARY
+  NAMES torch_python
+  PATHS "${TORCH_INSTALL_PREFIX}/lib"
+  NO_DEFAULT_PATH
+)
 
 # ===== Register Bindings =====
 include("${CMAKE_CONFIG_DIR}/RegisterDownloader.cmake")
@@ -23,20 +32,21 @@ file(GLOB BINDING_SOURCES "${BINDINGS_DIR}/*.cpp")
 pybind11_add_module(musicnet_module "${BINDING_SOURCES}")
 
 target_link_libraries(
-    musicnet_module PRIVATE
-    Downloader::core
-    Preprocessor::core
-    Dataset::core
-    LibTorch::LibTorch
-    Model::core
-    Scheduler::core
-    Optimizer::core
-    Trainer::core
+  musicnet_module PRIVATE
+  Aubio::Aubio
+  downloader_core
+  preprocessor_core
+  dataset_core
+  model_core
+  scheduler_core
+  optimizer_core
+  trainer_core
+  "${TORCH_PYTHON_LIBRARY}"
 )
 
 set_target_properties(
-    musicnet_module PROPERTIES
-    OUTPUT_NAME "${MODULE_NAME}"
-    LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
-    POSITION_INDEPENDENT_CODE ON
+  musicnet_module PROPERTIES
+  OUTPUT_NAME "${MODULE_NAME}"
+  LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
+  POSITION_INDEPENDENT_CODE ON
 )

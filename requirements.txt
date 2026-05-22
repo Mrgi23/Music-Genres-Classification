@@ -1,4 +1,4 @@
---extra-index-url https://download.pytorch.org/whl/cu128
+--extra-index-url https://download.pytorch.org/whl/cu132
 coverage
 librosa
 matplotlib
@@ -14,5 +14,5 @@ scikit-learn
 scipy
 soundfile
 tomli
-torch==2.8.0
+torch==2.12.0
 zstandard
