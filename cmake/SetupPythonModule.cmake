@@ -8,6 +8,14 @@ set(BINDINGS_DIR "${ROOT_DIR}/bindings" CACHE PATH "Pybind11 binding sources")
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 find_package(pybind11 REQUIRED CONFIG)
 
+# ----- Torch Python -----
+find_library(
+  TORCH_PYTHON_LIBRARY
+  NAMES torch_python
+  PATHS "${TORCH_INSTALL_PREFIX}/lib"
+  NO_DEFAULT_PATH
+)
+
 # ===== Register Bindings =====
 include("${CMAKE_CONFIG_DIR}/RegisterDownloader.cmake")
 include("${CMAKE_CONFIG_DIR}/RegisterPreprocessor.cmake")
@@ -25,6 +33,7 @@ pybind11_add_module(musicnet_module "${BINDING_SOURCES}")
 
 target_link_libraries(
   musicnet_module PRIVATE
+  Aubio::Aubio
   downloader_core
   preprocessor_core
   dataset_core
@@ -32,7 +41,7 @@ target_link_libraries(
   scheduler_core
   optimizer_core
   trainer_core
-  "${TORCH_LIBRARIES}"
+  "${TORCH_PYTHON_LIBRARY}"
 )
 
 set_target_properties(
