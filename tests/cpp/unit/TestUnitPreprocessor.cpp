@@ -1,53 +1,41 @@
 #include "Preprocessor.h"
-
 #include <gtest/gtest.h>
 
-using namespace std;
-
-// Define the test object.
 class TestPreprocessor : public ::testing::Test
 {
-    protected:
-        Preprocessor preprocessor;
+  protected:
+    Preprocessor preprocessor;
 };
 
-TEST_F(TestPreprocessor, ProcessFile)
+TEST_F(TestPreprocessor, processFile)
 {
-    // Define the input and expected result.
-    fs::path filePath = "../../../resources/jazz/jazz.00001.wav";
-    uint numFramesExpected = 1 + preprocessor.GetCfg().size / preprocessor.GetCfg().hop;
-    uint mfccSizeExpected = preprocessor.GetCfg().nmfcc;
+  fs::path filePath = "../../../resources/jazz/jazz.00001.wav";
+  uint numFramesExpected = 1 + preprocessor.config().size / preprocessor.config().hop;
+  uint mfccSizeExpected = preprocessor.config().nmfcc;
 
-    // Compute the result
-    torch::Tensor mfcc = preprocessor.ProcessFile(filePath);
-
-    // Test the result.
-    ASSERT_EQ(mfcc.numel(), numFramesExpected * mfccSizeExpected) << "Invalid number of the MFCC frames.";
+  torch::Tensor mfcc = preprocessor.processFile(filePath);
+  ASSERT_EQ(mfcc.numel(), numFramesExpected * mfccSizeExpected) << "Invalid number of the MFCC frames.";
 }
 
-TEST_F(TestPreprocessor, ProcessFileThrowError)
+TEST_F(TestPreprocessor, processFileThrowError)
 {
-    fs::path filePath = "../../../resources/jazz/jazz.00054.txt"; // Preprocessor::LoadAndCrop: Invalid or corrupted file.
-    EXPECT_THROW(preprocessor.ProcessFile(filePath), runtime_error);
+  fs::path filePath = "../../../resources/jazz/jazz.00054.txt";
+  EXPECT_THROW(preprocessor.processFile(filePath), std::runtime_error);
 }
 
-TEST_F(TestPreprocessor, NormalizeData)
+TEST_F(TestPreprocessor, normalizeData)
 {
-    // Define the input and expected result.
-    uint numFrames = 1 + preprocessor.GetCfg().size / preprocessor.GetCfg().hop;
-    uint mfccSize = preprocessor.GetCfg().nmfcc;
-    torch::Tensor x = 2.0f * torch::ones({numFrames, mfccSize});
-    torch::Tensor meanExpected = torch::ones({numFrames, mfccSize});
-    torch::Tensor stdExpected = 2.0f * torch::ones({numFrames, mfccSize});
-    torch::Tensor yExpected = 0.5f * torch::ones({numFrames, mfccSize});
+  uint numFrames = 1 + preprocessor.config().size / preprocessor.config().hop;
+  uint mfccSize = preprocessor.config().nmfcc;
+  torch::Tensor x = 2.0f * torch::ones({numFrames, mfccSize});
+  torch::Tensor meanExpected = torch::ones({numFrames, mfccSize});
+  torch::Tensor stdExpected = 2.0f * torch::ones({numFrames, mfccSize});
+  torch::Tensor yExpected = 0.5f * torch::ones({numFrames, mfccSize});
 
-    // Compute the result.
-    preprocessor.SetMean(meanExpected);
-    preprocessor.SetStd(stdExpected);
-    torch::Tensor y = preprocessor.NormalizeData(x);
-
-    // Test the result.
-    ASSERT_TRUE(torch::equal(preprocessor.GetMean(), meanExpected)) << "Invalid mean value.";
-    ASSERT_TRUE(torch::equal(preprocessor.GetStd(), stdExpected)) << "Invalid standard deviation value.";
-    ASSERT_TRUE(torch::equal(y, yExpected)) << "Invalid normalized signal.";
+  preprocessor.setMean(meanExpected);
+  preprocessor.setStd(stdExpected);
+  torch::Tensor y = preprocessor.normalizeData(x);
+  ASSERT_TRUE(torch::equal(preprocessor.mean(), meanExpected)) << "Invalid mean value.";
+  ASSERT_TRUE(torch::equal(preprocessor.std(), stdExpected)) << "Invalid standard deviation value.";
+  ASSERT_TRUE(torch::equal(y, yExpected)) << "Invalid normalized signal.";
 }

@@ -1,43 +1,32 @@
 #include "Downloader.h"
-
 #include <gtest/gtest.h>
 
-using namespace std;
-
-TEST(TestDownloader, DownloadAndExtract)
+TEST(TestDownloader, downloadAndExtract)
 {
-    // Define the test object.
-    fs::remove_all("../../../resources");
-    Downloader downloader("../../../resources");
+  fs::remove_all("../../../resources");
+  Downloader downloader("../../../resources");
 
-    // Define the expected result.
-    uint nFoldersExpected = 10U;
-    uint nFilesExpected = 999U;
+  uint nFoldersExpected = 10U;
+  uint nFilesExpected = 999U;
 
-    // Compute the result.
-    downloader.DownloadAndExtract();
-    downloader.DownloadAndExtract();
+  downloader.downloadAndExtract();
+  downloader.downloadAndExtract();
 
-    // Test the result.
-    uint nFolders = 0U;
-    uint nFiles = 0U;
-    for (auto& entry : fs::recursive_directory_iterator(downloader.GetRootPath()))
-    {
-        if (fs::is_directory(entry))
-        {
-            nFolders++;
-        }
-        else if (entry.path().extension() == ".wav")
-        {
-            nFiles++;
-        }
-    }
-    ASSERT_EQ(nFolders, nFoldersExpected) << "Invalid number of the dataset classes.";
-    ASSERT_EQ(nFiles, nFilesExpected) << "Invalid number of the dataset samples.";
+  uint nFolders = 0U;
+  uint nFiles = 0U;
+  for (const auto& entry : fs::recursive_directory_iterator(downloader.rootPath()))
+  {
+    if (fs::is_directory(entry))
+      nFolders++;
+    else if (entry.path().extension() == ".wav")
+      nFiles++;
+  }
+  ASSERT_EQ(nFolders, nFoldersExpected) << "Invalid number of the dataset classes.";
+  ASSERT_EQ(nFiles, nFilesExpected) << "Invalid number of the dataset samples.";
 }
 
-TEST(TestDownloader, DownloadAndExtractThrowError)
+TEST(TestDownloader, downloadAndExtractThrowError)
 {
-    Downloader downloader("./", "https://s3.mrgi23.com/artifacts/Music-Genres-Classification/dataset/invalid.tar.zst"); // Downloader::DownloadAndExtract: Invalid URL."
-    EXPECT_THROW(downloader.DownloadAndExtract(), invalid_argument);
+  Downloader downloader("./", "https://s3.mrgi23.com/artifacts/Music-Genres-Classification/dataset/invalid.tar.zst"); 
+  EXPECT_THROW(downloader.downloadAndExtract(), std::invalid_argument);
 }

@@ -5,11 +5,11 @@
  */
 struct Args
 {
-    bool help = false;
-    fs::path workingDir = fs::absolute("./");
-    fs::path predict = "";
-    bool force = false;
-    bool save = false;
+	bool help = false;
+	fs::path workingDir = fs::absolute("./");
+	fs::path predict = "";
+	bool force = false;
+	bool save = false;
 };
 
 /**
@@ -38,108 +38,94 @@ struct Args
  *       Enables saving of results (e.g., trained model checkpoints).
  *
  * @param[in] argc Number of command line arguments.
- * @param[in] argv Array of command line argument strings.
+ * @param[in] argv Array of command line argument std::strings.
  *
  * @return Args Populated Args structure containing parsed options.
- *
  * @throws std::invalid_argument If a required value (working directory
  *                               or prediction file) is missing or invalid.
  */
-Args ParseArgs(int argc, char * argv[])
+Args parseArgs(int argc, char* argv[])
 {
-    // Parse command line arguments.
-    Args args;
-    for (uint i = 0; i < argc; i++)
-    {
-        string arg = argv[i];
+	Args args;
+	for (uint i = 0; i < argc; i++)
+	{
+		std::string arg = argv[i];
 
-        if (arg == "-h" || arg == "--help")
-        {
-            args.help = true;
-            return args;
-        }
-        else if (arg == "-wd" || arg == "--working-dir")
-        {
-            if (i + 1 >= argc || string(argv[i + 1]).starts_with("-"))
-                throw invalid_argument("ParseArgs: Working directory not specified.");
-            args.workingDir = fs::absolute(fs::path(argv[++i]));
-        }
-        else if (arg == "-p" || arg == "--predict")
-        {
-            if (i + 1 >= argc || string(argv[i + 1]).starts_with("-"))
-                throw invalid_argument("ParseArgs: Prediction file not specified.");
-            args.predict = fs::absolute(fs::path(argv[++i]));
-        }
-        else if (arg == "-f" || arg == "--force")
-        {
-            args.force = true;
-        }
-        else if (arg == "-s" || arg == "--save")
-        {
-            args.save = true;
-        }
-    }
-    return args;
+		if (arg == "-h" || arg == "--help")
+		{
+			args.help = true;
+			return args;
+		}
+		else if (arg == "-wd" || arg == "--working-dir")
+		{
+			if (i + 1 >= argc || std::string(argv[i + 1]).starts_with("-"))
+				throw std::invalid_argument("ParseArgs: Working directory not specified.");
+			args.workingDir = fs::absolute(fs::path(argv[++i]));
+		}
+		else if (arg == "-p" || arg == "--predict")
+		{
+			if (i + 1 >= argc || std::string(argv[i + 1]).starts_with("-"))
+				throw std::invalid_argument("ParseArgs: Prediction file not specified.");
+			args.predict = fs::absolute(fs::path(argv[++i]));
+		}
+		else if (arg == "-f" || arg == "--force")
+		{
+			args.force = true;
+		}
+		else if (arg == "-s" || arg == "--save")
+		{
+			args.save = true;
+		}
+	}
+	return args;
 }
 
-int main(int argc, char * argv[])
+int main(int argc, char* argv[])
 {
-    try
-    {
-        // Parse command line arguments.
-        Args args = ParseArgs(argc, argv);
+	try
+	{
+		Args args = parseArgs(argc, argv);
+		if (args.help)
+		{
+			help();
+			return 0;
+		}
 
-        // Print help
-        if (args.help)
-        {
-            PrintHelp();
-            return 0;
-        }
+		if (fs::exists(args.workingDir))
+			global::root = args.workingDir;
 
-        // Set working dir.
-        if (fs::exists(args.workingDir))
-            global::root = args.workingDir;
+		fs::path configPath = fullPath("config/config.toml");
+		toml::table config = toml::parse_file(configPath.string());
+		auto& assets = *config["ASSETS"].as_table();
+		auto& preprocessorCfg = *config["PREPROCESSOR"].as_table();
+		auto& modelCfg = *config["MODEL"].as_table();
+		auto& schedulerCfg = *config["SCHEDULER"].as_table();
+		auto& trainerCfg = *config["TRAINER"].as_table();
 
-        // Load configuration.
-        fs::path configPath = GetFullPath("config/config.toml");
-        toml::table config = toml::parse_file(configPath.string());
-        auto& assets = *config["ASSETS"].as_table();
-        auto& preprocessorCfg = *config["PREPROCESSOR"].as_table();
-        auto& modelCfg = *config["MODEL"].as_table();
-        auto& schedulerCfg = *config["SCHEDULER"].as_table();
-        auto& trainerCfg = *config["TRAINER"].as_table();
+		init(preprocessorCfg, fullPath(param<std::string>(assets, "DATASET")), fullPath(param<std::string>(assets, "SPLITS")));
+		if (args.force)
+		{
+			loadScheduler(schedulerCfg);
+			train(trainerCfg);
 
-        // Initialization
-        Init(preprocessorCfg, GetFullPath(GetParam<string>(assets, "DATASET")), GetFullPath(GetParam<string>(assets, "SPLITS")));
+			if (args.save)
+				global::model->save(fullPath(param<std::string>(assets, "MODEL_CPP")));
+		}
+		else
+			loadModel(modelCfg, fullPath(param<std::string>(assets, "MODEL_CPP")));
 
-        if (args.force)
-        {
-            // Force train new model.
-            LoadScheduler(schedulerCfg);
-            Train(trainerCfg);
+		if (fs::exists(args.predict) && args.predict.extension() == ".wav")
+			predict(args.predict);
+		else
+			evaluate(trainerCfg);
 
-            // Save new model.
-            if (args.save)
-                global::model->Save(GetFullPath(GetParam<string>(assets, "MODEL_CPP")));
-        }
-        else
-            // Load trained model.
-            LoadModel(modelCfg, GetFullPath(GetParam<string>(assets, "MODEL_CPP")));
-
-        if (fs::exists(args.predict) && args.predict.extension() == ".wav")
-            // Predict genre for new entry.
-            Predict(args.predict);
-        else
-            // Evaluate model on test dataset.
-            Evaluate(trainerCfg);
-
-        cleanUp();
-        return 0;
-    }
-    catch (const exception & e)
-    {
-        cerr << e.what() << endl;
-        cleanUp();
-        return 1;
-    }
+		cleanUp();
+		return 0;
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+		cleanUp();
+		return 1;
+	}
 }

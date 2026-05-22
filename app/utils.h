@@ -1,6 +1,5 @@
 #include "Downloader.h"
 #include "Trainer.h"
-
 #include <cctype>
 #include <cstdio>
 #include <iomanip>
@@ -13,52 +12,49 @@
 #include <type_traits>
 
 using json = nlohmann::json;
-using namespace std;
 
 namespace global
 {
-    // Global
-    fs::path root;
-    PreprocessorConfig * pcfg = nullptr;
-    Preprocessor * preprocessor = nullptr;
-    AudioDataset * dataset = nullptr;
-    map<string, AudioSubset*> subsets = {
-        {"train", nullptr},
-        {"val", nullptr},
-        {"test", nullptr}
-    };
-    MusicModel * model = nullptr;
+  fs::path root;
+  PreprocessorConfig* pcfg = nullptr;
+  Preprocessor* preprocessor = nullptr;
+  AudioDataset* dataset = nullptr;
+  std::map<std::string, AudioSubset*> subsets = {
+    {"train", nullptr},
+    {"val", nullptr},
+    {"test", nullptr}
+  };
+  MusicModel* model = nullptr;
 
-    // Only if training.
-    ReduceLROnPlateau * scheduler = nullptr;
-    const map<string, OptimizerType> optTypes = {
-        {"Adam", OptimizerType::Adam},
-        {"AdamW", OptimizerType::AdamW},
-        {"RMSprop", OptimizerType::RMSprop},
-        {"SGD", OptimizerType::SGD}
-    };
-    Trainer * trainer = nullptr;
+  ReduceLROnPlateau* scheduler = nullptr;
+  const std::map<std::string, OptimizerType> optTypes = {
+    {"Adam", OptimizerType::Adam},
+    {"AdamW", OptimizerType::AdamW},
+    {"RMSprop", OptimizerType::RMSprop},
+    {"SGD", OptimizerType::SGD}
+  };
+  Trainer* trainer = nullptr;
 }
 
 /**
  * @brief Print usage instructions for the application.
  */
-void PrintHelp()
+void help()
 {
-    cout << "usage: musicnet [-h] [-wd WORKING_DIR] [-p PREDICT] [-f] [-s]" << endl
-         << endl
-         << "Application" << endl
-         << endl
-         << "options:" << endl
-         << endl
-         << "-h, --help                     show this help message and exit" << endl
-         << "-wd WORKING_DIR, --working-dir WORKING_DIR"  << endl
-         << "                               path to the project working directory" << endl
-         << "-p PREDICT, --predict PREDICT" << endl
-         << "                               sound file path to predict genre. If not provided, model is evaluated on the  test dataset" << endl
-         << "-f, --force                    force model training" << endl
-         << "-s, --save                     save new model (only if force training)"
-         << endl;
+  std::cout << "usage: musicnet [-h] [-wd WORKING_DIR] [-p PREDICT] [-f] [-s]" << std::endl
+       << std::endl
+       << "Application" << std::endl
+       << std::endl
+       << "options:" << std::endl
+       << std::endl
+       << "-h, --help                     show this help message and exit" << std::endl
+       << "-wd WORKING_DIR, --working-dir WORKING_DIR" << std::endl
+       << "                               path to the project working directory" << std::endl
+       << "-p PREDICT, --predict PREDICT" << std::endl
+       << "                               sound file path to predict genre. If not provided, model is evaluated on the  test dataset" << std::endl
+       << "-f, --force                    force model training" << std::endl
+       << "-s, --save                     save new model (only if force training)"
+       << std::endl;
 }
 
 /**
@@ -67,9 +63,9 @@ void PrintHelp()
  * @param[in] path Relative path to append to the root.
  * @return fs::path Absolute path under the root directory.
  */
-inline fs::path GetFullPath(const fs::path & path)
+inline fs::path fullPath(const fs::path& path)
 {
-    return global::root / path;
+  return global::root / path;
 }
 
 /**
@@ -92,18 +88,18 @@ inline fs::path GetFullPath(const fs::path & path)
  *                               does not match and no default value is provided.
  */
 template <typename T>
-T GetParam(const toml::table & table, const string & key, optional<T> defaultValue = nullopt)
+T param(const toml::table& table, const std::string& key, std::optional<T> defaultValue = std::nullopt)
 {
-    using useT = conditional_t<is_integral_v<T>, int64_t, T>;
+  using useT = std::conditional_t<std::is_integral_v<T>, int64_t, T>;
 
-    auto opt = table[key].value<useT>();
-    if (opt)
-        return *opt;
+  auto opt = table[key].value<useT>();
+  if (opt)
+    return *opt;
 
-    if (defaultValue)
-        return *defaultValue;
+  if (defaultValue)
+    return *defaultValue;
 
-    throw invalid_argument("Missing or invalid key: " + key);
+  throw std::invalid_argument("Missing or invalid key: " + key);
 }
 
 /**
@@ -118,40 +114,40 @@ T GetParam(const toml::table & table, const string & key, optional<T> defaultVal
  * @param[in] rootPath Path where the dataset should be stored.
  * @param[in] indicesPath JSON file containing dataset splits.
  */
-void Init(const toml::table & config, const fs::path & rootPath, const fs::path & indicesPath)
+void init(const toml::table& config, const fs::path& rootPath, const fs::path& indicesPath)
 {
-    cout << "Downloading dataset..." << endl;
+  std::cout << "Downloading dataset..." << std::endl;
 
-    Downloader(rootPath).DownloadAndExtract();
+  Downloader(rootPath).downloadAndExtract();
 
-    cout << "Dataset dowloaded." << endl;
+  std::cout << "Dataset dowloaded." << std::endl;
 
-    global::pcfg = new PreprocessorConfig(
-        GetParam<uint>(config, "SIZE"),
-        GetParam<uint>(config, "NUM_FFT"),
-        GetParam<uint>(config, "HOP"),
-        GetParam<uint>(config, "NUM_MELS"),
-        GetParam<uint>(config, "NUM_MFCC")
-    );
-    global::preprocessor = new Preprocessor(*global::pcfg);
+  global::pcfg = new PreprocessorConfig(
+    param<uint>(config, "SIZE"),
+    param<uint>(config, "NUM_FFT"),
+    param<uint>(config, "HOP"),
+    param<uint>(config, "NUM_MELS"),
+    param<uint>(config, "NUM_MFCC")
+  );
+  global::preprocessor = new Preprocessor(*global::pcfg);
 
-    cout << "Loading dataset..." << endl;
+  std::cout << "Loading dataset..." << std::endl;
 
-    global::dataset = new AudioDataset(rootPath, global::preprocessor);
+  global::dataset = new AudioDataset(rootPath, global::preprocessor);
 
-    cout << "Dataset loaded." << endl;
+  std::cout << "Dataset loaded." << std::endl;
 
-    ifstream jsonFile(indicesPath);
-    json splits;
-    jsonFile >> splits;
-    for (const string& key : {"train", "val", "test"})
-        global::subsets[key] = new AudioSubset(global::dataset, splits[key].get<vector<size_t>>());
+  std::ifstream jsonFile(indicesPath);
+  json splits;
+  jsonFile >> splits;
+  for (const std::string& key : {"train", "val", "test"})
+    global::subsets[key] = new AudioSubset(global::dataset, splits[key].get<std::vector<size_t>>());
 
-    torch::Tensor data = global::subsets["train"]->GetStackedData().to(torch::kFloat32);
-    global::preprocessor->SetMean(data.mean(0));
-    global::preprocessor->SetStd(data.std(0, false).clamp_min(1e-8));
+  torch::Tensor data = global::subsets["train"]->stackedData().to(torch::kFloat32);
+  global::preprocessor->setMean(data.mean(0));
+  global::preprocessor->setStd(data.std(0, false).clamp_min(1e-8));
 
-    global::model = new MusicModel();
+  global::model = new MusicModel();
 }
 
 /**
@@ -163,22 +159,21 @@ void Init(const toml::table & config, const fs::path & rootPath, const fs::path 
  * @param[in] config TOML configuration table containing parameters.
  * @param[in] modelPath Path to the serialized model file (.pt).
  */
-void LoadModel(const toml::table & config, const fs::path & modelPath)
+void loadModel(const toml::table& config, const fs::path& modelPath)
 {
-    cout << "Downloading model..." << endl;
+  std::cout << "Downloading model..." << std::endl;
 
-    if (!fs::exists(modelPath))
-    {
-        string baseUrl = GetParam<string>(config, "BASE_URL");
-        string package = GetParam<string>(config, "PACKAGE");
-        string version = GetParam<string>(config, "VERSION");
-        string url = baseUrl + "/" + package + "/" + version + "/" + package + "-cpp.pt";
-        Downloader::DownloadFromUrl(modelPath, url);
-    }
+  if (!fs::exists(modelPath))
+  {
+    std::string baseUrl = param<std::string>(config, "BASE_URL");
+    std::string package = param<std::string>(config, "PACKAGE");
+    std::string version = param<std::string>(config, "VERSION");
+    std::string url = baseUrl + "/" + package + "/" + version + "/" + package + "-cpp.pt";
+    Downloader::downloadFromUrl(modelPath, url);
+  }
 
-    cout << "Model downloaded." << endl;
-    
-    global::model->Load(modelPath);
+  std::cout << "Model downloaded." << std::endl;
+  global::model->load(modelPath);
 }
 
 /**
@@ -189,14 +184,14 @@ void LoadModel(const toml::table & config, const fs::path & modelPath)
  *
  * @param[in] config TOML configuration table containing parameters.
  */
-void LoadScheduler(const toml::table & config)
+void loadScheduler(const toml::table& config)
 {
-    if (!global::scheduler)
-        global::scheduler = new ReduceLROnPlateau(
-            GetParam<string>(config, "MODE"),
-            GetParam<float>(config, "FACTOR"),
-            GetParam<uint>(config, "PATIENCE")
-        );
+  if (!global::scheduler)
+    global::scheduler = new ReduceLROnPlateau(
+      param<std::string>(config, "MODE"),
+      param<float>(config, "FACTOR"),
+      param<uint>(config, "PATIENCE")
+    );
 }
 
 /**
@@ -209,61 +204,61 @@ void LoadScheduler(const toml::table & config)
  *
  * @param[in] config TOML configuration table containing parameters.
  */
-void Train(const toml::table & config)
+void train(const toml::table& config)
 {
-    unique_ptr<AudioDataloader<RandomSampler>> trainDataloader = torch::data::make_data_loader<RandomSampler>(
-        global::subsets["train"]->map(Stack<>()),
-        torch::data::DataLoaderOptions()
-        .batch_size(GetParam<size_t>(config, "BATCH_SIZE"))
-        .workers(GetParam<int>(config, "WORKERS"))
-    );
-    unique_ptr<AudioDataloader<SequentialSampler>> valDataloader = torch::data::make_data_loader<SequentialSampler>(
-        global::subsets["val"]->map(Stack<>()),
-        torch::data::DataLoaderOptions()
-        .batch_size(GetParam<size_t>(config, "BATCH_SIZE"))
-        .workers(GetParam<int>(config, "WORKERS"))
-    );
+  std::unique_ptr<AudioDataloader<RandomSampler>> trainDataloader = torch::data::make_data_loader<RandomSampler>(
+    global::subsets["train"]->map(Stack<>()),
+    torch::data::DataLoaderOptions()
+      .batch_size(param<size_t>(config, "BATCH_SIZE"))
+      .workers(param<int>(config, "WORKERS"))
+  );
+  std::unique_ptr<AudioDataloader<SequentialSampler>> valDataloader = torch::data::make_data_loader<SequentialSampler>(
+    global::subsets["val"]->map(Stack<>()),
+    torch::data::DataLoaderOptions()
+      .batch_size(param<size_t>(config, "BATCH_SIZE"))
+      .workers(param<int>(config, "WORKERS"))
+  );
 
-    if (!global::trainer)
+  if (!global::trainer)
+  {
+    OptimizerType type = global::optTypes.at(param<std::string>(config, "TYPE"));
+    OptimizerConfig ocfg = OptimizerConfig(param<double>(config, "LR"));
+    global::trainer = new Trainer(*global::model, type, ocfg);
+    if (global::scheduler)
+      global::trainer->attach(global::scheduler);
+  }
+
+  std::cout << "Training starting..." << std::endl;
+
+  float bestValAcc = -1.0f;
+  fs::path bestModel = fs::temp_directory_path() / "bestModel.pt";
+  for (uint epoch = 1; epoch < param<uint>(config, "EPOCHS") + 1; epoch++)
+  {
+    float trainLoss, trainAcc, valLoss, valAcc;
+    global::trainer->train(*trainDataloader, trainLoss, trainAcc);
+    global::trainer->eval(*valDataloader, valLoss, valAcc);
+
+    global::scheduler->update(valAcc);
+
+    if (valAcc > bestValAcc)
     {
-        OptimizerType type = global::optTypes.at(GetParam<string>(config, "TYPE"));
-        OptimizerConfig ocfg = OptimizerConfig(GetParam<double>(config, "LR"));
-        global::trainer = new Trainer(*global::model, type, ocfg);
-        if (global::scheduler)
-            global::trainer->AttachScheduler(global::scheduler);
+      bestValAcc = valAcc;
+      global::model->save(bestModel);
     }
 
-    cout << "Training starting..." << endl;
+    std::cout << "Epoch "
+         << std::setw(3) << std::setfill('0') << epoch
+         << " | Train loss: " << std::fixed << std::setprecision(6) << trainLoss
+         << " | Validation loss: " << std::fixed << std::setprecision(6) << valLoss
+         << " | Train accuracy: " << std::fixed << std::setprecision(6) << trainAcc
+         << " | Validation accuracy: " << std::fixed << std::setprecision(6) << valAcc
+         << std::endl;
+  }
 
-    float bestValAcc = -1.0f;
-    fs::path bestModel = fs::temp_directory_path() / "bestModel.pt";
-    for (uint epoch = 1; epoch < GetParam<uint>(config, "EPOCHS") + 1; epoch++)
-    {
-        float trainLoss, trainAcc, valLoss, valAcc;
-        global::trainer->TrainModel(*trainDataloader, trainLoss, trainAcc);
-        global::trainer->EvalModel(*valDataloader, valLoss, valAcc);
+  std::cout << "Training ended." << std::endl;
 
-        global::scheduler->UpdateLR(valAcc);
-
-        if (valAcc > bestValAcc)
-        {
-            bestValAcc = valAcc;
-            global::model->Save(bestModel);
-        }
-
-        cout << "Epoch "
-             << setw(3) << setfill('0') << epoch
-             << " | Train loss: "            << fixed << setprecision(6) << trainLoss
-             << " | Validation loss: "        << fixed << setprecision(6) << valLoss
-             << " | Train accuracy: "       << fixed << setprecision(6) << trainAcc
-             << " | Validation accuracy: "   << fixed << setprecision(6) << valAcc
-             << endl;
-    }
-
-    cout << "Training ended." << endl;
-
-    global::model->Load(bestModel);
-    fs::remove(bestModel);
+  global::model->load(bestModel);
+  fs::remove(bestModel);
 }
 
 /**
@@ -273,29 +268,29 @@ void Train(const toml::table & config)
  *
  * @param[in] config TOML configuration table containing parameters.
  */
-void Evaluate(const toml::table & config)
+void evaluate(const toml::table& config)
 {
-    unique_ptr<AudioDataloader<SequentialSampler>> testDataloader = torch::data::make_data_loader<SequentialSampler>(
-        global::subsets["test"]->map(Stack<>()),
-        torch::data::DataLoaderOptions()
-        .batch_size(GetParam<size_t>(config, "BATCH_SIZE"))
-        .workers(GetParam<int>(config, "WORKERS"))
+  std::unique_ptr<AudioDataloader<SequentialSampler>> testDataloader = torch::data::make_data_loader<SequentialSampler>(
+    global::subsets["test"]->map(Stack<>()),
+    torch::data::DataLoaderOptions()
+      .batch_size(param<size_t>(config, "BATCH_SIZE"))
+      .workers(param<int>(config, "WORKERS"))
     );
 
-    if (!global::trainer)
-    {
-        OptimizerType type = global::optTypes.at(GetParam<string>(config, "TYPE"));
-        OptimizerConfig ocfg = OptimizerConfig(GetParam<double>(config, "LR"));
-        global::trainer = new Trainer(*global::model, type, ocfg);
-    }
+  if (!global::trainer)
+  {
+    OptimizerType type = global::optTypes.at(param<std::string>(config, "TYPE"));
+    OptimizerConfig ocfg = OptimizerConfig(param<double>(config, "LR"));
+    global::trainer = new Trainer(*global::model, type, ocfg);
+  }
 
-    cout << "Evaluating model on test dataset..." << endl;
+  std::cout << "Evaluating model on test dataset..." << std::endl;
 
-    float loss, acc;
-    global::trainer->EvalModel(*testDataloader, loss, acc);
-    cout << "Test loss: "        << fixed << setprecision(6) << loss
-         << " | Test accuracy: " << fixed << setprecision(6) << acc
-         << endl;
+  float loss, acc;
+  global::trainer->eval(*testDataloader, loss, acc);
+  std::cout << "Test loss: " << std::fixed << std::setprecision(6) << loss
+       << " | Test accuracy: " << std::fixed << std::setprecision(6) << acc
+       << std::endl;
 }
 
 /**
@@ -307,19 +302,19 @@ void Evaluate(const toml::table & config)
  *
  * @param[in] filePath Path to the audio file to classify.
  */
-void Predict(const fs::path & filePath)
+void predict(const fs::path& filePath)
 {
-    global::model->to(DeviceManager::Get());
-    global::model->eval();
+  global::model->to(DeviceManager::get());
+  global::model->eval();
 
-    torch::Tensor x = global::preprocessor->NormalizeData(global::preprocessor->ProcessFile(filePath));
-    x = x.to(DeviceManager::Get());
+  torch::Tensor x = global::preprocessor->normalizeData(global::preprocessor->processFile(filePath));
+  x = x.to(DeviceManager::get());
 
-    torch::Tensor y = global::model->forward(x).argmax(1).to(torch::kLong);
+  torch::Tensor y = global::model->forward(x).argmax(1).to(torch::kLong);
 
-    string genre = global::dataset->GetClasses().at(y.item<int64_t>());
-    genre[0] = toupper(genre[0]);
-    cout << "Input sound file " << filePath.c_str() << " is of genre: " << genre << endl;
+  std::string genre = global::dataset->classes().at(y.item<int64_t>());
+  genre[0] = toupper(genre[0]);
+  std::cout << "Input sound file " << filePath.c_str() << " is of genre: " << genre << std::endl;
 }
 
 /**
@@ -331,48 +326,48 @@ void Predict(const fs::path & filePath)
  */
 void cleanUp()
 {
-    if (global::pcfg)
-    {
-        delete global::pcfg;
-        global::pcfg = nullptr;
-    }
+  if (global::pcfg)
+  {
+    delete global::pcfg;
+    global::pcfg = nullptr;
+  }
 
-    if (global::preprocessor)
-    {
-        delete global::preprocessor;
-        global::preprocessor = nullptr;
-    }
+  if (global::preprocessor)
+  {
+    delete global::preprocessor;
+    global::preprocessor = nullptr;
+  }
 
-    if (global::dataset)
-    {
-        delete global::dataset;
-        global::dataset = nullptr;
-    }
+  if (global::dataset)
+  {
+    delete global::dataset;
+    global::dataset = nullptr;
+  }
 
-    for (const string& key : {"train", "val", "test"})
+  for (const std::string& key : {"train", "val", "test"})
+  {
+    if (global::subsets[key])
     {
-        if (global::subsets[key])
-        {
-            delete global::subsets[key];
-            global::subsets[key] = nullptr;
-        }
+      delete global::subsets[key];
+      global::subsets[key] = nullptr;
     }
+  }
 
-    if (global::model)
-    {
-        delete global::model;
-        global::model = nullptr;
-    }
+  if (global::model)
+  {
+    delete global::model;
+    global::model = nullptr;
+  }
 
-    if(global::scheduler)
-    {
-        delete global::scheduler;
-        global::scheduler = nullptr;
-    }
+  if (global::scheduler)
+  {
+    delete global::scheduler;
+    global::scheduler = nullptr;
+  }
 
-    if (global::trainer)
-    {
-        delete global::trainer;
-        global::trainer = nullptr;
-    }
+  if (global::trainer)
+  {
+    delete global::trainer;
+    global::trainer = nullptr;
+  }
 }

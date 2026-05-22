@@ -1,79 +1,78 @@
 #include "Trainer.h"
 
-Trainer::Trainer(MusicModel & model, const OptimizerType & type, const OptimizerConfig & cfg)
-    : m_model(model), m_lossFunction(torch::nn::CrossEntropyLoss())
+Trainer::Trainer(MusicModel& model, const OptimizerType& type, const OptimizerConfig& cfg)
+  : m_model(model), m_lossFunction(torch::nn::CrossEntropyLoss())
 {
-    CreateOptimizer(model->parameters(), type, cfg, m_opt);
-    m_model->to(DeviceManager::Get());
+  createOptimizer(model->parameters(), type, cfg, m_opt);
+  m_model->to(DeviceManager::get());
 }
 
 Trainer::~Trainer() = default;
 
-void Trainer::AttachScheduler(ReduceLROnPlateau * scheduler)
+void Trainer::attach(ReduceLROnPlateau* scheduler)
 {
-    scheduler->AttachOptimizer(m_opt.get());
+  scheduler->attach(m_opt.get());
 }
 
-void Trainer::TrainModel(AudioDataloader<RandomSampler> & dataloader, float & loss, float & acc)
+void Trainer::train(AudioDataloader<RandomSampler>& dataloader, float& loss, float& acc)
 {
-    m_model->train();
+  m_model->train();
 
-    float totalLoss = 0.0f;
-    size_t numBatches = 0U;
-    float correctPred = 0.0f;
-    size_t totalSamples = 0U;
-    for (auto &batch : dataloader)
-    {
-        auto data = batch.data.to(DeviceManager::Get());
-        auto target = batch.target.to(DeviceManager::Get());
+  float totalLoss = 0.0f;
+  size_t numBatches = 0U;
+  float correctPred = 0.0f;
+  size_t totalSamples = 0U;
+  for (auto& batch : dataloader)
+  {
+    auto data = batch.data.to(DeviceManager::get());
+    auto target = batch.target.to(DeviceManager::get());
 
-        m_opt->zero_grad();
+    m_opt->zero_grad();
 
-        torch::Tensor output = m_model->forward(data);
-        auto batchLoss = m_lossFunction(output, target);
-        totalLoss += batchLoss.item<float>();
+    torch::Tensor output = m_model->forward(data);
+    auto batchLoss = m_lossFunction(output, target);
+    totalLoss += batchLoss.item<float>();
 
-        auto preds = output.argmax(1);
-        correctPred += preds.eq(target).sum().item<float>();
-        totalSamples += target.size(0);
+    auto preds = output.argmax(1);
+    correctPred += preds.eq(target).sum().item<float>();
+    totalSamples += target.size(0);
 
-        batchLoss.backward();
+    batchLoss.backward();
 
-        m_opt->step();
+    m_opt->step();
 
-        numBatches++;
-    }
+    numBatches++;
+  }
 
-    loss = totalLoss / static_cast<float>(numBatches);
-    acc = correctPred / static_cast<float>(totalSamples);
+  loss = totalLoss / static_cast<float>(numBatches);
+  acc = correctPred / static_cast<float>(totalSamples);
 }
 
-void Trainer::EvalModel(AudioDataloader<SequentialSampler> & dataloader, float & loss, float & acc)
+void Trainer::eval(AudioDataloader<SequentialSampler>& dataloader, float& loss, float& acc)
 {
-    m_model->eval();
-    torch::NoGradGuard noGrad;
+  m_model->eval();
+  torch::NoGradGuard noGrad;
 
-    float totalLoss = 0.0f;
-    size_t numBatches = 0U;
-    float correctPred = 0.0f;
-    size_t totalSamples = 0U;
-    for (auto &batch : dataloader)
-    {
-        auto data = batch.data.to(DeviceManager::Get());
-        auto target = batch.target.to(DeviceManager::Get());
+  float totalLoss = 0.0f;
+  size_t numBatches = 0U;
+  float correctPred = 0.0f;
+  size_t totalSamples = 0U;
+  for (auto& batch : dataloader)
+  {
+    auto data = batch.data.to(DeviceManager::get());
+    auto target = batch.target.to(DeviceManager::get());
 
-        torch::Tensor output = m_model->forward(data);
-        auto batchLoss = m_lossFunction(output, target);
-        totalLoss += batchLoss.item<float>();
+    torch::Tensor output = m_model->forward(data);
+    auto batchLoss = m_lossFunction(output, target);
+    totalLoss += batchLoss.item<float>();
 
-        // Calculate accuracy.
-        auto preds = output.argmax(1);
-        correctPred += preds.eq(target).sum().item<float>();
-        totalSamples += target.size(0);
+    auto preds = output.argmax(1);
+    correctPred += preds.eq(target).sum().item<float>();
+    totalSamples += target.size(0);
 
-        numBatches++;
-    }
+    numBatches++;
+  }
 
-    loss = totalLoss / static_cast<float>(numBatches);
-    acc = correctPred / static_cast<float>(totalSamples);
+  loss = totalLoss / static_cast<float>(numBatches);
+  acc = correctPred / static_cast<float>(totalSamples);
 }

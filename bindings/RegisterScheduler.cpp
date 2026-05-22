@@ -5,17 +5,17 @@
 
 namespace py = pybind11;
 
-void RegisterScheduler(py::module_ &m)
+void registerScheduler(py::module_& m)
 {
-    py::class_<ReduceLROnPlateau>(m, "ReduceLROnPlateau")
-    .def(
-        py::init<const std::string &, float, uint>(),
-        py::arg("mode"),
-        py::arg("factor"),
-        py::arg("patience")
-    )
-    .def(
-        "update_lr", &ReduceLROnPlateau::UpdateLR,
-        py::arg("metric")
-    );
+  py::class_<ReduceLROnPlateau>(m, "ReduceLROnPlateau")
+  .def(
+    py::init<const std::string&, float, uint>(),
+    py::arg("mode"),
+    py::arg("factor"),
+    py::arg("patience")
+  )
+  .def(
+    "update", &ReduceLROnPlateau::update,
+    py::arg("metric")
+  );
 }
