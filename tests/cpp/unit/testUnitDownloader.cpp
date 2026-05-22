@@ -1,4 +1,4 @@
-#include "Downloader.h"
+#include "downloader.hpp"
 #include <gtest/gtest.h>
 
 TEST(TestDownloader, downloadAndExtract)
@@ -27,6 +27,6 @@ TEST(TestDownloader, downloadAndExtract)
 
 TEST(TestDownloader, downloadAndExtractThrowError)
 {
-  Downloader downloader("./", "https://s3.mrgi23.com/artifacts/Music-Genres-Classification/dataset/invalid.tar.zst"); 
+  Downloader downloader("./", "https://s3.mrgi23.com/artifacts/Music-Genres-Classification/dataset/invalid.tar.zst");
   EXPECT_THROW(downloader.downloadAndExtract(), std::invalid_argument);
 }

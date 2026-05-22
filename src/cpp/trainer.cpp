@@ -1,4 +1,4 @@
-#include "Trainer.h"
+#include "trainer.hpp"
 
 Trainer::Trainer(MusicModel& model, const OptimizerType& type, const OptimizerConfig& cfg)
   : m_model(model), m_lossFunction(torch::nn::CrossEntropyLoss())

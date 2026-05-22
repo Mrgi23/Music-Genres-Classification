@@ -24,20 +24,20 @@ file(GLOB BINDING_SOURCES "${BINDINGS_DIR}/*.cpp")
 pybind11_add_module(musicnet_module "${BINDING_SOURCES}")
 
 target_link_libraries(
-    musicnet_module PRIVATE
-    Downloader::core
-    Preprocessor::core
-    Dataset::core
-    Model::core
-    Scheduler::core
-    Optimizer::core
-    Trainer::core
-    "${TORCH_LIBRARIES}"
+  musicnet_module PRIVATE
+  downloader_core
+  preprocessor_core
+  dataset_core
+  model_core
+  scheduler_core
+  optimizer_core
+  trainer_core
+  "${TORCH_LIBRARIES}"
 )
 
 set_target_properties(
-    musicnet_module PROPERTIES
-    OUTPUT_NAME "${MODULE_NAME}"
-    LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
-    POSITION_INDEPENDENT_CODE ON
+  musicnet_module PROPERTIES
+  OUTPUT_NAME "${MODULE_NAME}"
+  LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
+  POSITION_INDEPENDENT_CODE ON
 )

@@ -1,4 +1,4 @@
-#include "Trainer.h"
+#include "trainer.hpp"
 #include <algorithm>
 #include <cmath>
 #include <gmock/gmock.h>

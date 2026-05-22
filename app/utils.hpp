@@ -1,5 +1,5 @@
-#include "Downloader.h"
-#include "Trainer.h"
+#include "downloader.hpp"
+#include "trainer.hpp"
 #include <cctype>
 #include <cstdio>
 #include <iomanip>

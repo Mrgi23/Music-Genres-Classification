@@ -1,4 +1,4 @@
-#include "Model.h"
+#include "model.hpp"
 #include <gtest/gtest.h>
 #include <memory>
 #include <torch/autograd.h>
@@ -6,7 +6,7 @@
 class TestModel : public ::testing::Test
 {
   protected:
-    MusicModel *model;
+    MusicModel* model;
 
     void SetUp() override
     {

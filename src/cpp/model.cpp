@@ -1,4 +1,4 @@
-#include "Model.h"
+#include "model.hpp"
 #include <stdexcept>
 #include <torch/nn/functional/activation.h>
 #include <torch/serialize.h>

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Dataset.h"
-#include "Model.h"
-#include "Scheduler.h"
-#include "Optimizer.h"
+#include "dataset.hpp"
+#include "model.hpp"
+#include "scheduler.hpp"
+#include "optimizer.hpp"
 #include <torch/cuda.h>
 #include <torch/data/dataloader.h>
 #include <torch/data/datasets/map.h>

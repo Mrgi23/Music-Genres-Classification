@@ -1,4 +1,4 @@
-#include "Downloader.h"
+#include "downloader.hpp"
 #include <algorithm>
 #include <archive.h>
 #include <archive_entry.h>

@@ -1,4 +1,4 @@
-#include "Scheduler.h"
+#include "scheduler.hpp"
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <torch/optim/adam.h>
