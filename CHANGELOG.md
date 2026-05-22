@@ -1,4 +1,28 @@
 
+<a name="v1.2.1"></a>
+## [v1.2.1](https://github.com/Mrgi23/Music-Genres-Classification/compare/v1.2.0...v1.2.1) (2026-05-23)
+
+### Bug Fixes
+
+* Fixed bug in building Python module
+
+### Performance Improvements
+
+* Update libtorch version to 2.12.0 and cuda version to 13.2
+
+### Code Refactoring
+
+* Refactored code according to modern C++ standard
+
+### Maintenance
+
+* Added changes log for release v1.2.1
+
+### Formatting
+
+* Changed indentation and naming conventions
+
+
 <a name="v1.2.0"></a>
 ## [v1.2.0](https://github.com/Mrgi23/Music-Genres-Classification/compare/v1.1.0...v1.2.0) (2026-04-16)
 

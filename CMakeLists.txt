@@ -46,11 +46,11 @@ target_link_libraries(
   Aubio::Aubio
   CURL::libcurl
   LibArchive::LibArchive
-  LibTorch::LibTorch
   nlohmann_json::nlohmann_json
   OpenMP::OpenMP_CXX
   pthread
   tomlplusplus::tomlplusplus
+  "${TORCH_LIBRARIES}"
 )
 
 set_target_properties(

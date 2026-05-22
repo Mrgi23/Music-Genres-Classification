@@ -34,9 +34,9 @@ target_link_libraries(
   GTest::gtest_main
   GTest::gmock
   LibArchive::LibArchive
-  LibTorch::LibTorch
   OpenMP::OpenMP_CXX
   pthread
+  "${TORCH_LIBRARIES}"
 )
 
 add_custom_target(
@@ -59,9 +59,9 @@ target_link_libraries(
   GTest::gtest_main
   GTest::gmock
   LibArchive::LibArchive
-  LibTorch::LibTorch
   OpenMP::OpenMP_CXX
   pthread
+  "${TORCH_LIBRARIES}"
 )
 
 add_custom_target(

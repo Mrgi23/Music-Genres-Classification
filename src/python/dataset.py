@@ -1,5 +1,4 @@
 from preprocessor import Preprocessor
-
 from joblib import delayed, Parallel
 import multiprocessing as mp
 from pathlib import Path
@@ -7,123 +6,122 @@ import torch
 from torch.utils.data import Dataset
 
 class AudioDataset(Dataset):
+  """
+  AudioDataset
+
+  Dataset class for loading and preprocessing audio data.
+
+  This dataset loads audio files from a directory, applies preprocessing
+  (via Preprocessor), and provides data/target pairs as tuple[torch.Tensor, torch.Tensor].
+  Data can be preloaded from a serialized .pt archive to save time.
+  """
+  def __init__(self, root_path: Path, preprocessor: Preprocessor):
     """
-    AudioDataset
+    Construct a new AudioDataset object.
 
-    Dataset class for loading and preprocessing audio data.
+    If a serialized dataset exists, it is loaded from disk.
+    Otherwise, the dataset is built by preprocessing audio files.
 
-    This dataset loads audio files from a directory, applies preprocessing
-    (via Preprocessor), and provides data/target pairs as tuple[torch.Tensor, torch.Tensor].
-    Data can be preloaded from a serialized .pt archive to save time.
+    Parameters
+    ----------
+    root_path : Path
+      Root directory containing genre subfolders
+    preprocessor : Preprocessor
+      Reference to a Preprocessor for feature extraction.
     """
-    def __init__(self, root_path: Path, preprocessor: Preprocessor):
-        """
-        Construct a new AudioDataset object.
+    super().__init__()
 
-        If a serialized dataset exists, it is loaded from disk.
-        Otherwise, the dataset is built by preprocessing audio files.
+    self.__preprocessor = preprocessor
+    root_path = Path(root_path)
 
-        Parameters
-        ----------
-        root_path : Path
-            Root directory containing genre subfolders
-        preprocessor : Preprocessor
-            Reference to a Preprocessor for feature extraction.
-        """
-        super().__init__()
+    dataset_path = root_path / "dataset_py.pt"
 
-        self.__preprocessor = preprocessor
-        root_path = Path(root_path)
+    if dataset_path.exists():
+      self.__data, self.__target, self.__classes = torch.load(dataset_path)
+    else:
+      self.__data = []
+      self.__target = []
+      self.__classes = {}
 
-        dataset_path = root_path / "dataset_py.pt"
+      tasks = []
+      for dir_path in sorted(root_path.iterdir()):
+        if dir_path.is_dir():
+          genre = dir_path.name
+          class_target = torch.tensor(len(self.__classes), dtype=torch.long)
+          self.__classes[class_target.item()] = genre
 
-        if dataset_path.exists():
-            self.__data, self.__target, self.__classes = torch.load(dataset_path)
-        else:
-            self.__data = []
-            self.__target = []
-            self.__classes = {}
+          for file_path in sorted(dir_path.iterdir()):
+            if file_path.suffix == ".wav":
+              tasks.append((file_path, class_target))
 
-            tasks = []
-            for dir_path in sorted(root_path.iterdir()):
-                if dir_path.is_dir():
-                    genre = dir_path.name
-                    class_target = torch.tensor(len(self.__classes), dtype=torch.long)
-                    self.__classes[class_target.item()] = genre
+      results = Parallel(n_jobs=mp.cpu_count())(
+        delayed(lambda f, t: (preprocessor.process_file(f), t))(file_path, target)
+        for file_path, target in tasks
+      )
+      self.__data, self.__target = zip(*results)
+      torch.save((self.__data, self.__target, self.__classes), dataset_path)
 
-                    for file_path in sorted(dir_path.iterdir()):
-                        if file_path.suffix == ".wav":
-                            tasks.append((file_path, class_target))
+  @property
+  def classes(self) -> dict[int, str]:
+    """
+    Get the mapping from tensor indices to class names.
 
-            results = Parallel(n_jobs=mp.cpu_count())(
-                delayed(lambda f, t: (preprocessor.process_file(f), t))(file_path, target)
-                for file_path, target in tasks
-            )
-            self.__data, self.__target = zip(*results)
+    Returns
+    -------
+    dict[int, str]
+      Class dictionary.
+    """
+    return self.__classes
 
-            torch.save((self.__data, self.__target, self.__classes), dataset_path)
+  @property
+  def data(self) -> list[torch.Tensor]:
+    """
+    Get the list of all data tensors.
 
-    @property
-    def classes(self) -> dict[int, str]:
-        """
-        Get the mapping from tensor indices to class names.
+    Returns
+    -------
+    list[torch.Tensor]
+      Data list.
+    """
+    return self.__data
 
-        Returns
-        -------
-        dict[int, str]
-            Class dictionary.
-        """
-        return self.__classes
+  @property
+  def preprocessor(self) -> Preprocessor:
+    """
+    Get the associated Preprocessor instance.
 
-    @property
-    def data(self) -> list[torch.Tensor]:
-        """
-        Get the list of all data tensors.
+    Returns
+    -------
+    Preprocessor
+      Preprocessor reference.
+    """
+    return self.__preprocessor
 
-        Returns
-        -------
-        list[torch.Tensor]
-            Data list.
-        """
-        return self.__data
+  def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Get a single data/target example by index.
 
-    @property
-    def preprocessor(self) -> Preprocessor:
-        """
-        Get the associated Preprocessor instance.
+    Parameters
+    ----------
+    index : int
+      Sample index.
 
-        Returns
-        -------
-        Preprocessor
-            Preprocessor reference.
-        """
-        return self.__preprocessor
+    Returns
+    -------
+    tuple[torch.Tensor, torch.Tensor]
+      Pair of (data, target).
+    """
+    data = self.__preprocessor.normalize_data(self.__data[index])
+    target = self.__target[index]
+    return data, target
 
-    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Get a single data/target example by index.
+  def __len__(self) -> int:
+    """
+    Get the dataset size.
 
-        Parameters
-        ----------
-        index : int
-            Sample index.
-
-        Returns
-        -------
-        tuple[torch.Tensor, torch.Tensor]
-            Pair of (data, target).
-        """
-        data = self.__preprocessor.normalize_data(self.__data[index])
-        target = self.__target[index]
-        return data, target
-
-    def __len__(self) -> int:
-        """
-        Get the dataset size.
-
-        Returns
-        -------
-        int
-            Number of samples.
-        """
-        return len(self.__data)
+    Returns
+    -------
+    int
+      Number of samples.
+    """
+    return len(self.__data)
