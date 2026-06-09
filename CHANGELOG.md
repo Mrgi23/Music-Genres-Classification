@@ -1,4 +1,16 @@
 
+<a name="v1.2.2"></a>
+## [v1.2.2](https://github.com/Mrgi23/Music-Genres-Classification/compare/v1.2.1...v1.2.2) (2026-06-09)
+
+### Maintenance
+
+* Added changes log for release v1.2.2
+
+### Formatting
+
+* Fixed function naming and docstring
+
+
 <a name="v1.2.1"></a>
 ## [v1.2.1](https://github.com/Mrgi23/Music-Genres-Classification/compare/v1.2.0...v1.2.1) (2026-05-23)
 
