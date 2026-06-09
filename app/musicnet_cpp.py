@@ -34,8 +34,8 @@ if __name__ == "__main__":
     model = utils_cpp.load_model(model_cfg, Path("./") / assets["MODEL_CPP"])
 
   if Path(args.predict).exists() and Path(args.predict).rglob("*.wav"):
-    preprocessor = train_dataset.get_dataset().get_preprocessor()
-    classes = train_dataset.get_dataset().get_classes()
+    preprocessor = train_dataset.dataset().preprocessor()
+    classes = train_dataset.dataset().classes()
     utils_cpp.predict(model, preprocessor, args.predict, classes)
   else:
     utils_cpp.evaluate(trainer_cfg, model, test_dataset)
