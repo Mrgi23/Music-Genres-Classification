@@ -234,6 +234,17 @@ class AudioDataset():
     """
     ...
 
+  def preprocessor(self) -> Preprocessor:
+    """
+    Get the preprocessor used for this dataset.
+
+    Returns
+    -------
+    Preprocessor
+      Reference to the Preprocessor instance.
+    """
+    ...
+
   def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Get a single data/target example by index.
@@ -279,6 +290,17 @@ class AudioSubset():
       Reference to the parent dataset.
     indices : list[int]
       Indices of samples to include in the subset.
+    """
+    ...
+
+  def dataset(self) -> AudioDataset:
+    """
+    Get the parent dataset.
+
+    Returns
+    -------
+    AudioDataset
+      Reference to the parent AudioDataset instance.
     """
     ...
 

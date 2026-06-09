@@ -168,7 +168,7 @@ def train(config: dict, scheduler_config: dict, train_dataset: Subset, val_datas
   best_state = None
   for epoch in range(1, config["EPOCHS"] + 1):
     train_loss, train_acc = trainer.train_model(train_dataloader)
-    val_loss, val_acc = trainer.eval_model(val_dataloader)
+    val_loss, val_acc = trainer.eval(val_dataloader)
 
     scheduler.step(val_acc)
 
@@ -209,7 +209,7 @@ def evaluate(config: dict, model: MusicModel, test_dataset: Subset) -> None:
 
   print("Evaluating model on test dataset...")
 
-  test_loss, test_acc  = trainer.eval_model(test_dataloader)
+  test_loss, test_acc  = trainer.eval(test_dataloader)
   print(f"Test loss: {test_loss} | Test accuracy: {test_acc}")
 
 def predict(model: MusicModel, preprocessor: Preprocessor, file_path: Path, classes: dict) -> None:
